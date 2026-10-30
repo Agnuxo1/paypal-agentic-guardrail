@@ -1,0 +1,20 @@
+node_modules/
+.env
+.env.*
+!.env.example
+
+# Vaults and ledgers are operator state, never committed.
+*.vault.json
+ledger*.jsonl
+*.ledger.jsonl
+
+# Recorded transports may carry sandbox response bodies.
+cassette*.json
+tape*.json
+
+# Bench output: the two committed result files are added explicitly.
+bench/results/*
+!bench/results/latest-mock.json
+
+npm-debug.log*
+.DS_Store

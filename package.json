@@ -1,0 +1,38 @@
+{
+  "name": "paypal-agentic-guardrail",
+  "version": "1.0.0",
+  "description": "Let an AI agent run PayPal charges, refunds and payouts without ever holding the credential, choosing the payee or raising the amount.",
+  "type": "module",
+  "license": "MIT",
+  "author": "Francisco Angulo de Lafuente (Agnuxo1)",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Agnuxo1/paypal-agentic-guardrail.git"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "bin": {
+    "guardrail": "./src/cli.js"
+  },
+  "scripts": {
+    "start": "node src/cli.js serve",
+    "console": "node src/cli.js console",
+    "demo": "node src/cli.js demo",
+    "bench": "node bench/run.js",
+    "bench:sandbox": "node bench/run.js --transport sandbox",
+    "test": "node --test \"tests/*.test.js\"",
+    "policy:check": "node src/cli.js policy-check"
+  },
+  "dependencies": {
+    "enigmagent-mcp": "^1.0.5"
+  },
+  "keywords": [
+    "paypal",
+    "agentic-commerce",
+    "ai-agent",
+    "prompt-injection",
+    "payment-security",
+    "mcp"
+  ]
+}

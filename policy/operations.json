@@ -1,0 +1,133 @@
+{
+  "version": 1,
+  "environment": "sandbox",
+  "_comment": [
+    "This is the operator's policy. Only a human edits it, and the running system has no",
+    "operation that can change it. `bound` fields are fixed here: the agent cannot reach them.",
+    "`agent` fields are the agent's only degrees of freedom, inside these ranges.",
+    "`${VAR}` is read from the environment at load time, so no merchant id or receiver address",
+    "is committed to the repository."
+  ],
+  "operations": [
+    {
+      "name": "charge_customer_eur",
+      "api": "orders_v2.create",
+      "description": "Create a EUR order for one catalogue item, payable to the operator's own merchant account.",
+      "bound": {
+        "intent": "CAPTURE",
+        "purchase_units[0].payee.merchant_id": "${OPERATOR_MERCHANT_ID}",
+        "purchase_units[0].amount.currency_code": "EUR",
+        "purchase_units[0].reference_id": "guardrail-order"
+      },
+      "agent": {
+        "amount": {
+          "path": "purchase_units[0].amount.value",
+          "type": "decimal",
+          "min": "1.00",
+          "max": "250.00"
+        },
+        "sku": {
+          "path": "purchase_units[0].items[0].sku",
+          "type": "enum",
+          "values": ["SKU-BASIC", "SKU-PRO", "SKU-TEAM"]
+        }
+      },
+      "limits": {
+        "per_call_max": "250.00",
+        "daily_total_max": "2000.00",
+        "max_calls_per_hour": 40
+      },
+      "approval": "none",
+      "response": ["ok", "status", "order_id", "amount", "currency_code"]
+    },
+    {
+      "name": "capture_order",
+      "api": "orders_v2.capture",
+      "description": "Capture an order this broker created earlier.",
+      "bound": {},
+      "agent": {},
+      "limits": {
+        "per_call_max": "250.00",
+        "daily_total_max": "2000.00",
+        "max_calls_per_hour": 40
+      },
+      "approval": "none",
+      "response": ["ok", "status", "capture_id"]
+    },
+    {
+      "name": "show_order",
+      "api": "orders_v2.show",
+      "description": "Read the status of an order this broker created earlier.",
+      "bound": {},
+      "agent": {},
+      "approval": "none",
+      "response": ["ok", "status"]
+    },
+    {
+      "name": "refund_capture_eur",
+      "api": "payments_v2.refund",
+      "description": "Refund part or all of a capture this broker made, in EUR, with a short customer-facing note.",
+      "bound": {
+        "amount.currency_code": "EUR"
+      },
+      "agent": {
+        "amount": {
+          "path": "amount.value",
+          "type": "decimal",
+          "min": "1.00",
+          "max": "250.00"
+        },
+        "note": {
+          "path": "note_to_payer",
+          "type": "text",
+          "max_length": 120
+        }
+      },
+      "limits": {
+        "per_call_max": "250.00",
+        "daily_total_max": "1000.00",
+        "max_calls_per_hour": 20
+      },
+      "approval": "over_amount:100.00",
+      "response": ["ok", "status", "refund_id", "amount"]
+    },
+    {
+      "name": "pay_supplier_eur",
+      "api": "payouts_v1.create",
+      "description": "Send a EUR payout to one of the operator's approved suppliers. The receiver is bound by the operator; the agent only picks the amount.",
+      "bound": {
+        "sender_batch_header.email_subject": "Payment from your customer",
+        "items[0].recipient_type": "EMAIL",
+        "items[0].receiver": "${OPERATOR_SUPPLIER_EMAIL}",
+        "items[0].amount.currency": "EUR"
+      },
+      "derived": {
+        "sender_batch_header.sender_batch_id": "request_id"
+      },
+      "agent": {
+        "amount": {
+          "path": "items[0].amount.value",
+          "type": "decimal",
+          "min": "1.00",
+          "max": "500.00"
+        }
+      },
+      "limits": {
+        "per_call_max": "500.00",
+        "daily_total_max": "1500.00",
+        "max_calls_per_hour": 10
+      },
+      "approval": "over_amount:200.00",
+      "response": ["ok", "status", "payout_batch_id", "amount"]
+    },
+    {
+      "name": "show_payout",
+      "api": "payouts_v1.show",
+      "description": "Read the status of a payout batch this broker sent.",
+      "bound": {},
+      "agent": {},
+      "approval": "none",
+      "response": ["ok", "status"]
+    }
+  ]
+}
