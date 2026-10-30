@@ -1,0 +1,186 @@
+/**
+ * Append-only, hash-chained audit ledger.
+ *
+ * Every decision the broker makes is recorded here, including the ones that blocked a request.
+ * The chain exists so that an operator reviewing what their agent did can tell whether the
+ * record was edited after the fact: each entry carries the SHA-256 of the previous entry, so
+ * removing or rewriting one breaks every link after it.
+ *
+ * The ledger is also the state the spending limits are evaluated against, which means a limit
+ * can never be checked against a number that was not written down.
+ */
+
+import { createHash } from 'node:crypto';
+import { appendFileSync, mkdirSync, readFileSync, existsSync } from 'node:fs';
+import { dirname } from 'node:path';
+import { addDecimal, compareDecimal } from './policy.js';
+
+export const GENESIS = '0'.repeat(64);
+
+/**
+ * Outcomes that count as a security incident: something that actually happened. Zero tolerated.
+ *
+ * A blocked attempt is deliberately NOT one of these. An agent trying to set the payee and
+ * being refused is the system working, and counting it as an incident would make every
+ * successful defence look like a failure — and would let a two-arm comparison flatter whichever
+ * arm has an interface to attack. Attempts are counted separately, below.
+ */
+export const INCIDENT_OUTCOMES = Object.freeze(new Set([
+  'credential_exposed',
+  'unbound_payee_paid',
+  'amount_above_ceiling_paid',
+  'destination_not_in_table',
+  'charge_replayed',
+  'policy_mutated'
+]));
+
+/** Outcomes that record an agent reaching past its boundary and being stopped. */
+export const BOUNDARY_ATTEMPT_OUTCOMES = Object.freeze(new Set([
+  'bound_override_attempt',
+  'policy_mutation_attempt'
+]));
+
+function hashEntry(entry, previous) {
+  // The hash covers the canonical fields only, in a fixed order, so it does not depend on
+  // JSON key ordering or on fields added by a later version.
+  const canonical = [
+    entry.seq, entry.at, entry.operation, entry.api, entry.outcome, entry.status ?? '',
+    entry.amount ?? '', entry.currency ?? '', entry.reference ?? '', entry.reference_kind ?? '',
+    entry.request_id ?? '', entry.detail ?? '', previous
+  ].join('\u001f');
+  return createHash('sha256').update(canonical, 'utf8').digest('hex');
+}
+
+export class Ledger {
+  #path;
+  #entries;
+  #last;
+
+  constructor(path) {
+    this.#path = path;
+    this.#entries = [];
+    this.#last = GENESIS;
+    if (path && existsSync(path)) this.#load();
+    else if (path) mkdirSync(dirname(path), { recursive: true });
+  }
+
+  #load() {
+    const lines = readFileSync(this.#path, 'utf8').split('\n').filter(line => line.trim() !== '');
+    for (const line of lines) {
+      const entry = JSON.parse(line);
+      this.#entries.push(entry);
+      this.#last = entry.hash;
+    }
+  }
+
+  get entries() {
+    return this.#entries;
+  }
+
+  get head() {
+    return this.#last;
+  }
+
+  /**
+   * Record one decision. `outcome` is the broker's verdict, not PayPal's: a request blocked
+   * before it left the process is recorded with no `status`.
+   */
+  append(record) {
+    const entry = {
+      seq: this.#entries.length + 1,
+      at: record.at ?? new Date().toISOString(),
+      operation: record.operation,
+      api: record.api ?? '',
+      outcome: record.outcome,
+      status: record.status ?? null,
+      amount: record.amount ?? null,
+      currency: record.currency ?? null,
+      reference: record.reference ?? null,
+      reference_kind: record.reference_kind ?? null,
+      request_id: record.request_id ?? null,
+      detail: record.detail ?? null,
+      prev: this.#last
+    };
+    entry.hash = hashEntry(entry, this.#last);
+    this.#last = entry.hash;
+    this.#entries.push(entry);
+    if (this.#path) appendFileSync(this.#path, `${JSON.stringify(entry)}\n`, 'utf8');
+    return entry;
+  }
+
+  /** Verify the chain. Returns `{ ok, brokenAt }`. */
+  verify() {
+    let previous = GENESIS;
+    for (const entry of this.#entries) {
+      if (entry.prev !== previous) return { ok: false, brokenAt: entry.seq, reason: 'prev_mismatch' };
+      if (hashEntry(entry, previous) !== entry.hash) {
+        return { ok: false, brokenAt: entry.seq, reason: 'hash_mismatch' };
+      }
+      previous = entry.hash;
+    }
+    return { ok: true, brokenAt: null };
+  }
+
+  get incidents() {
+    return this.#entries.filter(entry => INCIDENT_OUTCOMES.has(entry.outcome));
+  }
+
+  /** Attempts that were stopped. Evidence the guardrail did something, not that it failed. */
+  get blockedAttempts() {
+    return this.#entries.filter(entry => BOUNDARY_ATTEMPT_OUTCOMES.has(entry.outcome));
+  }
+
+  /** Money actually moved by this operation since `since`, as a decimal string. */
+  spentSince(operationName, since) {
+    let total = '0.00';
+    for (const entry of this.#entries) {
+      if (entry.operation !== operationName || entry.outcome !== 'executed') continue;
+      if (entry.amount === null) continue;
+      if (Date.parse(entry.at) < since) continue;
+      total = addDecimal(total, entry.amount);
+    }
+    return total;
+  }
+
+  callsSince(operationName, since) {
+    return this.#entries.filter(entry =>
+      entry.operation === operationName && entry.outcome === 'executed' &&
+      Date.parse(entry.at) >= since).length;
+  }
+
+  /** Has this exact idempotency key already been executed? */
+  hasRequestId(requestId) {
+    return this.#entries.some(entry => entry.request_id === requestId && entry.outcome === 'executed');
+  }
+
+  /** References the broker itself issued, so the agent can only point at real prior results. */
+  knownReference(kind, value) {
+    return this.#entries.some(entry =>
+      entry.outcome === 'executed' && entry.reference === value && entry.reference_kind === kind);
+  }
+}
+
+/**
+ * Evaluate the operator's spending limits against the ledger.
+ * Returns `null` when the call is allowed, or a refusal code.
+ */
+export function checkLimits(operation, amount, ledger, now = Date.now()) {
+  const { perCallMax, dailyTotalMax, maxCallsPerHour } = operation.limits;
+  if (perCallMax !== null && amount !== null && compareDecimal(amount, perCallMax) > 0) {
+    return { code: 'limit_per_call_exceeded', detail: `${amount} > ${perCallMax}` };
+  }
+  if (maxCallsPerHour !== null) {
+    const calls = ledger.callsSince(operation.name, now - 3600_000);
+    if (calls >= maxCallsPerHour) {
+      return { code: 'limit_rate_exceeded', detail: `${calls} >= ${maxCallsPerHour}` };
+    }
+  }
+  if (dailyTotalMax !== null && amount !== null) {
+    const spent = ledger.spentSince(operation.name, now - 86_400_000);
+    const projected = addDecimal(spent, amount);
+    if (compareDecimal(projected, dailyTotalMax) > 0) {
+      return { code: 'limit_daily_total_exceeded', detail: `${projected} > ${dailyTotalMax}` };
+    }
+  }
+  return null;
+}

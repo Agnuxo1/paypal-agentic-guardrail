@@ -1,0 +1,46 @@
+# Three ways in, none of which need a PayPal account:
+#
+#   docker compose run --rm demo      the scripted session, printed
+#   docker compose run --rm bench     the 30-case, three-arm bench
+#   docker compose run --rm test      the test suite
+#   docker compose up console         the operator console on http://127.0.0.1:7788/
+#
+# To point any of them at the real PayPal sandbox instead, put sandbox credentials in .env and
+# set GUARDRAIL_TRANSPORT=sandbox there.
+
+services:
+  demo:
+    build: .
+    env_file:
+      - path: .env
+        required: false
+    command: ["node", "src/cli.js", "demo"]
+
+  bench:
+    build: .
+    env_file:
+      - path: .env
+        required: false
+    command: ["node", "bench/run.js", "--variants", "5"]
+
+  test:
+    build: .
+    env_file:
+      - path: .env
+        required: false
+    command: ["node", "--test", "tests/broker.test.js"]
+
+  console:
+    build: .
+    env_file:
+      - path: .env
+        required: false
+    # Loopback only inside the container; published to the host's loopback only.
+    ports:
+      - "127.0.0.1:7788:7788"
+    environment:
+      GUARDRAIL_CONSOLE_PORT: "7788"
+      # The host mapping above cannot reach the container's own loopback, so bind inside the
+      # container and publish to the host's loopback only.
+      GUARDRAIL_CONSOLE_BIND: "0.0.0.0"
+    command: ["node", "src/cli.js", "console"]
