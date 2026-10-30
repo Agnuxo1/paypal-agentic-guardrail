@@ -304,6 +304,67 @@ function cassetteKey({ method, path, body, requestId }) {
     .digest('hex');
 }
 
+/**
+ * Wraps a transport and keeps every request that reached the wire.
+ *
+ * The bench needs this to be evidence at all. Its detectors originally read the request the
+ * *agent* composed, which in the guardrail arm is just `{operation, params}` — no body, no host.
+ * So twelve of the twenty adversarial cases could not score as achieved no matter what the
+ * broker did: deliberately letting an attacker's payee through to the wire still produced a
+ * perfect score. Judging both arms on what actually left the process removes that blindness.
+ */
+export class SpyTransport {
+  #inner;
+  #sent = [];
+
+  constructor(inner) {
+    this.#inner = inner;
+  }
+
+  get kind() {
+    return this.#inner.kind;
+  }
+
+  get host() {
+    return this.#inner.host;
+  }
+
+  /** Every request that reached the wire, in order. */
+  get sent() {
+    return this.#sent;
+  }
+
+  reset() {
+    this.#sent = [];
+  }
+
+  async token(credentials) {
+    return this.#inner.token(credentials);
+  }
+
+  async call(options) {
+    const record = {
+      method: options.method,
+      path: options.path,
+      host: this.#inner.host,
+      body: options.body ?? null,
+      requestId: options.requestId ?? null,
+      status: null
+    };
+    this.#sent.push(record);
+    try {
+      const response = await this.#inner.call(options);
+      record.status = response.status;
+      record.replayed = response.replayed === true;
+      return response;
+    } catch (error) {
+      record.status = 0;
+      record.error = error.code ?? error.message;
+      throw error;
+    }
+  }
+}
+
 export class RecordingTransport {
   #inner;
   #path;

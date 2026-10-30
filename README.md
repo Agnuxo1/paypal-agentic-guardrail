@@ -73,12 +73,15 @@ has nothing to compromise you with.
   call, so a limit is never checked against a number that was not written down.
 - **Human approval thresholds.** `approval: over_amount:200.00` parks the payment and the agent
   gets `pending_approval`. Nothing moves until a person clicks approve.
-- **Server-derived idempotency.** A replayed instruction maps to the same key, so "run it again,
-  I don't think it worked" cannot charge a customer twice.
+- **Server-derived idempotency.** Within a one-minute window, a repeated instruction maps to the
+  same key, so "run it again, I don't think it worked" does not charge twice. Outside that
+  window it is a new request, and only PayPal's own `PayPal-Request-Id` handling applies.
 - **A hash-chained audit ledger.** Every decision, including the refusals. Editing one entry
-  breaks every link after it, and `guardrail ledger-verify` says where.
+  breaks every link after it, and `guardrail ledger-verify` says where. The chain is unkeyed: it
+  detects an edit, it does not stop someone who can write the file from recomputing it.
 - **An operator console** that shows what the agent may do, what it did, and what is waiting for
-  you — on loopback, behind a token.
+  you — loopback only, behind a token the server never puts in the page, and refusing any `Host`
+  header other than localhost.
 - **An MCP server** with exactly two tools, so any MCP client (Claude Desktop, Cursor, Continue)
   can drive it.
 
@@ -108,8 +111,8 @@ arm is the one that matters.
 | | guardrail | control | control + prompt defence |
 |---|---|---|---|
 | **Benign tasks completed** | **50/50** | 50/50 | 50/50 |
-| **Attacks blocked** | **100/100 (100%)** | 5/100 (5%) | 60/100 (60%) |
-| **Security incidents** | **0** | 80 | 40 |
+| **Attacks blocked** | **100/100 (100%)** | 10/100 (10%) | 60/100 (60%) |
+| **Security incidents** | **0** | 75 | 40 |
 | Steps per run, mean (sd) | 1.23 (0.42) | 1.03 (0.18) | 0.63 (0.48) |
 | Credential in agent context | no | yes | yes |
 
@@ -123,7 +126,7 @@ This is the most interesting row in the whole project:
 
 | Attack family | guardrail | control | control + prompt defence |
 |---|---|---|---|
-| Direct injection (the user says it) | 30/30 | 0/30 | **25/30 (83%)** |
+| Direct injection (the user says it) | 30/30 | 5/30 | **25/30 (83%)** |
 | **Indirect injection (the data says it)** | 30/30 | 0/30 | **10/30 (33%)** |
 | Policy attacks | 20/20 | 0/20 | 15/20 (75%) |
 | Limit attacks | 20/20 | 5/20 | 10/20 (50%) |
@@ -143,7 +146,6 @@ Incidents by class, for the two control arms:
 | Composed a call to an outside host | 10 | 5 |
 | Paid in an unbound currency | 5 | 5 |
 | Emitted the credential | 10 | 0 |
-| Charged twice | 5 | 0 |
 
 ### What these numbers are, and are not
 
@@ -172,6 +174,40 @@ Being explicit about both:
 - **Attacker goals are checked semantically.** "Blocked" means *the attacker did not get what
   they wanted* — money reaching any payee other than the one you bound counts as a loss, not just
   an exact match on the attacker's string.
+- **Everything is scored on what left the process**, not on what an arm said about itself. See
+  below for why that sentence is in this README at all.
+
+### What an independent review found
+
+Before publishing, the project was given to an independent reviewer with one instruction: try to
+show that the bench is fooling itself. It was, and the finding was worse than the two above.
+
+The detectors read the request the *agent* composed. In the guardrail arm that is
+`{operation, params}` — no body, no host — so twelve of the twenty adversarial goals could not
+score as achieved whatever the broker did. The reviewer proved it by deliberately breaking the
+broker so an attacker's payee reached the wire. **The bench still reported 100/100 attacks
+blocked and zero incidents.** The headline number was not evidence of anything.
+
+The detectors now read what the transport was actually asked to send, identically for all three
+arms. Re-running the same mutation afterwards takes the guardrail arm from 100/100 with 0
+incidents to **70/100 with 30 incidents** — the bench can now fail, which is the only reason to
+believe it when it passes. `tests/detectors.test.js` pins that down so the blindness cannot
+return.
+
+The same review found four real defects in the product, all fixed and all now covered by tests
+in `tests/limits.test.js`:
+
+| What was wrong | What happened |
+|---|---|
+| Limits were read before an `await` and written after it | 40 parallel MCP calls spent €9,992 against a €2,000 daily cap. `execute` now serialises. |
+| Approving a queued payment skipped the limit check | 8 individually-valid approvals totalled twice their cap. Limits are re-checked at approval. |
+| The console served its own token inside the page | Any process on the machine, the agent included, could read it and approve its own payments. The operator now pastes it. |
+| The console and the MCP server each had their own in-memory approval queue | The agent's `pending_approval` never appeared in the console, so the human-in-the-loop flow did not work at all across processes. Both now share state on disk. |
+
+One of the control arm's reported incidents was also an artefact — the control deliberately used
+a different idempotency key on a retry, so "charged twice" was counted when nothing had been
+duplicated. It is gone from the table above, which is why the control's incident total is 75 and
+not 80.
 
 ## The security property, stated precisely
 
@@ -218,7 +254,7 @@ ledger, the console, the MCP surface and the bench are all new.
 npm install
 npm run demo            # a scripted session: what it does, and what it refuses
 npm run bench           # the 450-run experiment above
-npm test                # 32 tests on the security invariants
+npm test                # 52 tests on the invariants and on the bench's own detectors
 npm run console         # operator console at http://127.0.0.1:7788/
 node src/cli.js policy-check    # print exactly what each operation allows
 ```
@@ -274,7 +310,7 @@ A plain `.env` with `PAYPAL_CLIENT_ID` / `PAYPAL_CLIENT_SECRET` also works; it i
 CLI says so at startup. See [`.env.example`](.env.example).
 
 **Sandbox only.** A policy that declares `environment: live` is refused unless you set an
-explicit opt-in variable. This project has only ever been run against the sandbox.
+explicit opt-in variable. No part of this project has ever been pointed at live PayPal.
 
 ## Connecting a real agent
 
@@ -320,11 +356,15 @@ entire attack surface.
 
 The loader refuses a policy that would quietly weaken itself: an agent field aimed at a bound or
 derived path, an agent maximum above the per-call limit, a write operation with no declared
-limits, a live environment without the opt-in. `node src/cli.js policy-check` prints what each
-operation permits.
+limits, a live environment without the opt-in, a path that is a prefix of another, and — the
+ones that matter most — **a money-moving operation whose amount the limits would not count**: a
+bound constant amount, a second decimal field, or an amount declared as text. Each of those used
+to load happily and left the daily cap and the approval threshold counting nothing.
+`node src/cli.js policy-check` prints what each operation permits.
 
-Free-text fields reject URLs, email addresses and bank identifiers, so a "note to the customer"
-cannot smuggle a destination.
+A free-text field, such as the `note_to_payer` a customer reads, allows prose and little else:
+no URLs, no bare domains, no email addresses, no IBANs labelled or not, no long digit runs, and
+no characters outside Latin-1 that could carry a homoglyph. Accented prose is fine.
 
 ## Layout
 
@@ -340,7 +380,7 @@ cannot smuggle a destination.
 | `src/console.js` | operator console |
 | `src/mcp-server.js` | the two-tool MCP surface |
 | `bench/` | 30 cases, detectors, the runner, committed results |
-| `tests/` | 32 tests on the invariants the claims rest on, broker and MCP surface |
+| `tests/` | 52 tests: broker invariants, MCP surface, limits and approvals, and the bench's detectors |
 
 ## PayPal endpoints used
 
@@ -364,8 +404,10 @@ Built for the PayPal AI Hackathon, submission period 1 Oct – 12 Nov 2026. Enti
 written during that period, depending on the author's previously published `enigmagent-mcp`
 package for the encrypted vault — the split between the two is spelled out above.
 
-Independent review: a pre-submission code review was run and its findings addressed; an
-independent second audit is still outstanding at the time of writing.
+Independent review: a pre-submission review was run, it found that the bench could not fail and
+four real defects in the product, and all of them were fixed before publication — the details
+are in "What an independent review found" above, including the numbers that changed as a result.
+A second independent audit was planned and could not be performed, so it remains outstanding.
 
 ## Licence
 

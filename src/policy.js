@@ -24,10 +24,41 @@ export class PolicyError extends Error {
 
 const DECIMAL = /^(0|[1-9]\d{0,9})\.\d{2}$/;
 const OPERATION_NAME = /^[a-z][a-z0-9_]{2,63}$/;
-/** A note must not be able to smuggle a destination into a human-readable field. */
-const NOTE_FORBIDDEN = /(https?:\/\/|\bwww\.|@|\bIBAN\b|\bBIC\b|[<>{}])/i;
+/**
+ * A free-text field reaches a human — `note_to_payer` is shown to the customer — so it must not
+ * be able to smuggle a destination past the operator.
+ *
+ * An earlier version checked for the literal words IBAN and BIC and for `@`, and a review walked
+ * `attacker.example/refund`, a bare `ES9121000418450200051332`, a full-width `＠` homoglyph and a
+ * phone number straight through it. This allows plain prose and little else: letters, digits,
+ * spaces and ordinary punctuation, with no bare domains, no long digit runs, and no characters
+ * outside the Latin-1 range that could carry a homoglyph.
+ */
+const NOTE_ALLOWED = /^[A-Za-z0-9 .,:;!?'"()\-–—/€$£%+&À-ÿ\n]*$/;
+const NOTE_FORBIDDEN = new RegExp([
+  'https?://',                       // an explicit URL
+  'www\\.',                          // a bare www host
+  '[A-Za-z0-9-]+\\.(?:com|net|org|io|co|example|es|eu|dev|app|xyz|me|info|biz)\\b', // a bare domain
+  '@',                               // an email address
+  '\\bIBAN\\b', '\\bBIC\\b', '\\bSWIFT\\b',
+  '\\b[A-Z]{2}\\d{2}[A-Z0-9]{10,30}\\b',   // an IBAN with no label
+  '\\d[\\d .-]{8,}\\d',                    // a long digit run: account or phone number
+  '[<>{}\\\\]'                             // markup or escaping
+].join('|'), 'i');
 
 const FIELD_TYPES = new Set(['decimal', 'enum', 'text', 'integer']);
+
+/** The tail of a path that carries a monetary value in PayPal's request bodies. */
+const AMOUNT_PATH_TAIL = /(^|\.)(amount\.value|amount\.0|value)$/;
+
+/** Operations that move money, as opposed to writes that only act on an existing one. */
+const MONEY_MOVING_APIS = new Set([
+  'orders_v2.create', 'payments_v2.refund', 'payouts_v1.create'
+]);
+
+function movesMoney(apiKey) {
+  return MONEY_MOVING_APIS.has(apiKey);
+}
 const APPROVAL = /^(none|always|over_amount:(0|[1-9]\d{0,9})\.\d{2})$/;
 const RESPONSE_FIELDS = new Set([
   'ok', 'status', 'order_id', 'capture_id', 'authorization_id', 'refund_id',
@@ -178,11 +209,53 @@ function validateOperation(raw, index) {
     throw new PolicyError('invalid_response_fields', raw.name);
   }
 
-  // A write that moves money must declare an amount ceiling the agent cannot exceed, either
-  // as a bound constant or as an agent field whose `max` is at or below `per_call_max`.
-  const amountField = agent.find(field => field.type === 'decimal');
+  // The spending limits are only real if the amount they count is the amount that goes out.
+  // A review found three ways a policy could load with limits that count nothing: an amount
+  // bound as a constant with no decimal field (the ledger recorded `null`, so neither the daily
+  // cap nor the approval threshold applied); a second decimal field whose maximum dwarfed the
+  // first, with only the first counted; and an amount declared as `text`, which skips the
+  // numeric checks entirely. Each is refused here.
+  const decimalFields = agent.filter(field => field.type === 'decimal');
+  const amountField = decimalFields[0] ?? null;
+
+  if (endpoint.writes && movesMoney(raw.api)) {
+    if (decimalFields.length === 0) {
+      throw new PolicyError('money_operation_needs_decimal_amount', raw.name);
+    }
+    if (decimalFields.length > 1) {
+      // Only the first is counted against the limits, so a second one is an unmetered amount.
+      throw new PolicyError('money_operation_has_multiple_amounts', raw.name);
+    }
+    // A text or enum field aimed at a known amount path would bypass the numeric checks.
+    for (const field of agent) {
+      if (field.type !== 'decimal' && AMOUNT_PATH_TAIL.test(field.path.join('.'))) {
+        throw new PolicyError('amount_path_must_be_decimal', `${raw.name}.${field.name}`);
+      }
+    }
+    for (const entry of bound) {
+      if (AMOUNT_PATH_TAIL.test(entry.path.join('.'))) {
+        throw new PolicyError('amount_must_not_be_bound', `${raw.name}.${entry.path.join('.')}`);
+      }
+    }
+  }
+
   if (endpoint.writes && amountField && compareDecimal(amountField.max, limits.per_call_max) > 0) {
     throw new PolicyError('agent_max_above_per_call_max', raw.name);
+  }
+
+  // A path that is a prefix of another writes an object where a scalar is expected, or the
+  // reverse, and the request then throws at call time instead of being refused at load time.
+  const allPaths = [
+    ...bound.map(entry => entry.path.join('.')),
+    ...derived.map(entry => entry.path.join('.')),
+    ...agent.map(field => field.path.join('.'))
+  ];
+  for (const outer of allPaths) {
+    for (const inner of allPaths) {
+      if (outer !== inner && inner.startsWith(`${outer}.`)) {
+        throw new PolicyError('path_is_prefix_of_another', `${raw.name}: ${outer} / ${inner}`);
+      }
+    }
   }
 
   return Object.freeze({
@@ -317,7 +390,9 @@ export function validateParameters(operation, params) {
       if (typeof given !== 'string' || given.length === 0 || given.length > field.maxLength) {
         throw new PolicyError('parameter_text_invalid', field.name);
       }
-      if (NOTE_FORBIDDEN.test(given)) throw new PolicyError('parameter_text_forbidden_content', field.name);
+      if (!NOTE_ALLOWED.test(given) || NOTE_FORBIDDEN.test(given)) {
+        throw new PolicyError('parameter_text_forbidden_content', field.name);
+      }
       values[field.name] = given;
     }
   }

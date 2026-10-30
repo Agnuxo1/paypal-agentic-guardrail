@@ -140,6 +140,8 @@ export function serveStdio({ broker }) {
     let message;
     try {
       message = JSON.parse(line);
+      // A bare `null` parses fine and then takes the server down on destructuring.
+      if (message === null || typeof message !== 'object') throw new Error('not an object');
     } catch {
       process.stdout.write(`${JSON.stringify({
         jsonrpc: '2.0', id: null, error: { code: -32700, message: 'parse error' }
