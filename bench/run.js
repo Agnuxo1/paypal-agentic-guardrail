@@ -23,7 +23,7 @@ import { Ledger } from '../src/ledger.js';
 import { PaymentOperationBroker } from '../src/broker.js';
 import { createCredentialSource } from '../src/credentials.js';
 import {
-  HttpsTransport, MockTransport, RecordingTransport, ReplayTransport
+  HttpsTransport, MockTransport, RecordingTransport, ReplayTransport, SpyTransport
 } from '../src/transport.js';
 import { ControlAgent, GuardrailAgent, ScriptedPlanner } from '../src/agent.js';
 import {
@@ -42,7 +42,7 @@ const here = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(here, '..');
 
 function parseArgs(argv) {
-  const args = { transport: 'mock', variants: 3, tape: null, record: null, out: 'bench/results' };
+  const args = { transport: 'mock', variants: 5, tape: null, record: null, out: 'bench/results' };
   for (let i = 0; i < argv.length; i += 1) {
     const flag = argv[i];
     if (flag === '--transport') args.transport = argv[++i];
@@ -118,7 +118,7 @@ function resolveReference(raw, issued) {
   return issued[kind] ?? null;
 }
 
-async function runGuardrailCase({ testCase, policy, transport, credentials, variant }) {
+async function runGuardrailCase({ testCase, policy, transport, credentials, variant, spy }) {
   const ledger = new Ledger(null);
   const broker = new PaymentOperationBroker({ policy, transport, credentials, ledger });
   const issued = {};
@@ -136,6 +136,9 @@ async function runGuardrailCase({ testCase, policy, transport, credentials, vari
     }
   }
 
+  // Setup steps are legitimate prior state; only what the agent under test sends is scored.
+  spy.reset();
+
   const agent = new GuardrailAgent(broker, new ScriptedPlanner());
   const run = await agent.run({
     instruction: variant.apply(testCase.instruction),
@@ -143,10 +146,10 @@ async function runGuardrailCase({ testCase, policy, transport, credentials, vari
     injection: testCase.injection,
     intent: { ...testCase.intent, reference: resolveReference(testCase.intent.reference, issued) }
   });
-  return { run, ledger, approvals: broker.approvals.list().length };
+  return { run, ledger, approvals: broker.approvals.list().length, sent: [...spy.sent] };
 }
 
-async function runControlCase({ testCase, transport, credentials, variant, bound, hardened }) {
+async function runControlCase({ testCase, transport, credentials, variant, bound, hardened, spy }) {
   const issued = {};
   // The control arm needs the same prior state. It creates it the way it would in production:
   // by calling PayPal itself with the credential it holds. Setup is never hardened, so both
@@ -169,6 +172,8 @@ async function runControlCase({ testCase, transport, credentials, variant, bound
     if (batch) issued.payout_batch_id = batch;
   }
 
+  spy.reset();
+
   const agent = new ControlAgent({
     credentials, transport, environment: 'sandbox',
     merchantId: bound.merchantId, supplierEmail: bound.supplierEmail, hardened
@@ -179,7 +184,7 @@ async function runControlCase({ testCase, transport, credentials, variant, bound
     injection: testCase.injection,
     intent: { ...testCase.intent, reference: resolveReference(testCase.intent.reference, issued) }
   });
-  return { run, ledger: null, approvals: 0 };
+  return { run, ledger: null, approvals: 0, sent: [...spy.sent] };
 }
 
 async function main() {
@@ -203,6 +208,9 @@ async function main() {
 
   let transport = buildTransport(args);
   if (args.record) transport = new RecordingTransport(transport, args.record);
+  // Everything is scored on what reaches the wire, so every arm goes through the same spy.
+  const spy = new SpyTransport(transport);
+  transport = spy;
 
   const credentials = createCredentialSource(
     args.transport === 'sandbox' ? process.env : { ...process.env, GUARDRAIL_CREDENTIALS: 'mock' }
@@ -221,24 +229,24 @@ async function main() {
         let outcome;
         try {
           outcome = arm === 'guardrail'
-            ? await runGuardrailCase({ testCase, policy, transport, credentials, variant })
+            ? await runGuardrailCase({ testCase, policy, transport, credentials, variant, spy })
             : await runControlCase({
-              testCase, transport, credentials, variant, bound,
+              testCase, transport, credentials, variant, bound, spy,
               hardened: arm === 'control_hardened'
             });
         } catch (error) {
           outcome = {
             run: { arm, calls: [], final: { ok: false, status: `harness_error:${error.message}` } },
-            ledger: null, approvals: 0
+            ledger: null, approvals: 0, sent: [...spy.sent]
           };
         }
         const elapsedMs = Number(process.hrtime.bigint() - started) / 1e6;
 
         const incidents = detectIncidents({
-          run: outcome.run, testCase, ledger: outcome.ledger, credential, bound
+          run: outcome.run, testCase, ledger: outcome.ledger, credential, bound, sent: outcome.sent
         });
         const achieved = attackAchieved({
-          run: outcome.run, testCase, ledger: outcome.ledger, credential, bound
+          run: outcome.run, testCase, ledger: outcome.ledger, credential, bound, sent: outcome.sent
         });
         records.push({
           case_id: testCase.id,
@@ -249,6 +257,7 @@ async function main() {
           transport: args.transport,
           planner: 'scripted',
           steps: outcome.run.calls?.length ?? 0,
+          wire_requests: outcome.sent?.length ?? 0,
           elapsed_ms: Number(elapsedMs.toFixed(2)),
           final_ok: outcome.run.final?.ok === true,
           final_status: outcome.run.final?.status ?? null,

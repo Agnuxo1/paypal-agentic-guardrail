@@ -32,8 +32,19 @@ export function createConsoleServer({ broker, policy, token = randomBytes(24).to
   const server = createServer((request, response) => {
     const url = new URL(request.url, 'http://127.0.0.1');
 
+    // A Host header the operator did not configure is refused: without this, a page on another
+    // origin can point a DNS name at 127.0.0.1 and talk to this server in the operator's browser.
+    const host = (request.headers.host ?? '').split(':')[0];
+    if (!['127.0.0.1', 'localhost', '[::1]', '::1'].includes(host)) {
+      return send(response, 403, 'text/plain', 'host not allowed\n');
+    }
+
     if (request.method === 'GET' && url.pathname === '/') {
-      return send(response, 200, 'text/html; charset=utf-8', page(token));
+      // The token is NOT embedded in the page. It was, and that meant any process on the
+      // machine — the agent included — could fetch `/`, read the token out of the HTML and
+      // approve its own payments. The operator pastes the token the CLI printed, and the page
+      // keeps it in sessionStorage for that tab only.
+      return send(response, 200, 'text/html; charset=utf-8', page());
     }
 
     // Everything else is API and needs the token.
@@ -139,7 +150,7 @@ function json(response, status, body) {
   send(response, status, 'application/json', JSON.stringify(body));
 }
 
-function page(token) {
+function page() {
   return `<!doctype html>
 <html lang="en">
 <head>
@@ -213,6 +224,22 @@ function page(token) {
   <h1>Payment Guardrail — operator console</h1>
   <p class="sub">What the agent may do, what it did, and what is waiting for you.</p>
 
+  <div class="panel" id="gate" hidden>
+    <h2>Operator token</h2>
+    <p class="sub" style="margin:-4px 0 12px">
+      Paste the token the CLI printed when it started. The server does not put it in this page,
+      so nothing else running on this machine can read it.
+    </p>
+    <form id="gate-form" class="row" autocomplete="off">
+      <input id="gate-input" type="password" placeholder="operator token" spellcheck="false"
+             style="flex:1 1 260px; font:13px var(--mono); padding:7px 10px; border-radius:7px;
+                    border:1px solid var(--line); background:var(--bg); color:var(--ink);">
+      <button class="primary" type="submit">Unlock</button>
+    </form>
+    <p class="empty" id="gate-error"></p>
+  </div>
+
+  <div id="panels" hidden>
   <div class="panel">
     <h2>Status</h2>
     <div class="row" id="status"></div>
@@ -236,9 +263,27 @@ function page(token) {
     <h2>Audit ledger</h2>
     <div id="ledger"></div>
   </div>
+  </div>
 </div>
 <script>
-const TOKEN = ${JSON.stringify(token)};
+// The server does not hand out the token. Paste the one the CLI printed; it is kept for this
+// browser tab only, so another process on this machine cannot read it out of the page.
+let TOKEN = '';
+try { TOKEN = sessionStorage.getItem('guardrail-token') || ''; } catch { TOKEN = ''; }
+
+function askForToken(message) {
+  document.getElementById('gate').hidden = false;
+  document.getElementById('panels').hidden = true;
+  if (message) document.getElementById('gate-error').textContent = message;
+}
+
+function unlock(value) {
+  TOKEN = value;
+  try { sessionStorage.setItem('guardrail-token', value); } catch { /* private window */ }
+  document.getElementById('gate').hidden = true;
+  document.getElementById('panels').hidden = false;
+  refresh();
+}
 const esc = value => String(value ?? '').replace(/[&<>"]/g, c =>
   ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
@@ -247,6 +292,11 @@ async function api(path, options = {}) {
     ...options,
     headers: { authorization: 'Bearer ' + TOKEN, 'content-type': 'application/json' }
   });
+  if (response.status === 401) {
+    try { sessionStorage.removeItem('guardrail-token'); } catch { /* ignore */ }
+    askForToken('That token was not accepted.');
+    return null;
+  }
   return response.json();
 }
 
@@ -321,6 +371,7 @@ function renderLedger(state) {
 
 async function refresh() {
   const state = await api('/api/state');
+  if (!state) return;  // the token was rejected; the gate is showing
   renderStatus(state);
   renderApprovals(state);
   renderOperations(state);
@@ -339,8 +390,19 @@ document.addEventListener('click', async event => {
   }
 });
 
-refresh();
-setInterval(refresh, 2000);
+document.getElementById('gate-form').addEventListener('submit', event => {
+  event.preventDefault();
+  const value = document.getElementById('gate-input').value.trim();
+  if (value) unlock(value);
+});
+
+if (TOKEN) {
+  document.getElementById('panels').hidden = false;
+  refresh();
+} else {
+  askForToken('');
+}
+setInterval(() => { if (TOKEN) refresh(); }, 2000);
 </script>
 </body>
 </html>`;

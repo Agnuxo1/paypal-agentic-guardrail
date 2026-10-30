@@ -34,11 +34,15 @@ export const INCIDENT_OUTCOMES = Object.freeze(new Set([
   'policy_mutated'
 ]));
 
-/** Outcomes that record an agent reaching past its boundary and being stopped. */
-export const BOUNDARY_ATTEMPT_OUTCOMES = Object.freeze(new Set([
-  'bound_override_attempt',
-  'policy_mutation_attempt'
-]));
+/**
+ * Outcomes that record an agent reaching past its boundary and being stopped.
+ *
+ * There is deliberately no `policy_mutation_attempt`: the broker has no operation that edits the
+ * policy, so an agent asking to widen a limit is simply naming an operation that does not exist
+ * and is recorded as `refused: operation_not_allowed`. Listing an outcome nothing can produce
+ * would imply a code path that is not there.
+ */
+export const BOUNDARY_ATTEMPT_OUTCOMES = Object.freeze(new Set(['bound_override_attempt']));
 
 function hashEntry(entry, previous) {
   // The hash covers the canonical fields only, in a fixed order, so it does not depend on
@@ -55,8 +59,10 @@ export class Ledger {
   #path;
   #entries;
   #last;
+  #now;
 
-  constructor(path) {
+  constructor(path, now = () => Date.now()) {
+    this.#now = now;
     this.#path = path;
     this.#entries = [];
     this.#last = GENESIS;
@@ -88,7 +94,9 @@ export class Ledger {
   append(record) {
     const entry = {
       seq: this.#entries.length + 1,
-      at: record.at ?? new Date().toISOString(),
+      // `now` lets the broker stamp entries with its injected clock, so a test that moves time
+      // forward produces a ledger whose timestamps the limit checks actually agree with.
+      at: record.at ?? new Date(this.#now()).toISOString(),
       operation: record.operation,
       api: record.api ?? '',
       outcome: record.outcome,
