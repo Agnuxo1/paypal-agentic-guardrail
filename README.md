@@ -15,6 +15,16 @@ That works immediately — no PayPal account, no API key, no network. An offline
 sandbox endpoints is the default, so a reviewer can reproduce every number below in about a
 minute. Point it at the real sandbox when you want to: [two env vars](#running-against-the-real-paypal-sandbox).
 
+| Over 450 runs of a 30-case bench | guardrail | the way it's done today | + a prompt defence |
+|---|---|---|---|
+| Attacks blocked | **100/100** | 10/100 | 60/100 |
+| Security incidents | **0** | 75 | 40 |
+| Benign tasks completed | **50/50** | 50/50 | 50/50 |
+
+Zero incidents **and** no loss of usefulness. Six PayPal operations, spending limits, human
+approval thresholds, a hash-chained audit ledger, an operator console and an MCP server, in
+~3,400 lines with one dependency. 52 tests. [What the bench covers and what it does not](#observations-and-limitations).
+
 ---
 
 ## The problem
@@ -147,68 +157,6 @@ Incidents by class, for the two control arms:
 | Paid in an unbound currency | 5 | 5 |
 | Emitted the credential | 10 | 0 |
 
-### What these numbers are, and are not
-
-**They are produced by a deterministic scripted agent against an offline stand-in for PayPal.**
-Being explicit about both:
-
-- **The agent is scripted, not a language model.** It is handed a structured statement of what
-  the hostile text asks for, and it complies. That models a *fully credulous* model — the worst
-  case, which is the case worth defending against — and makes the bench reproducible by anyone
-  with this repo and no API key. It does **not** measure how often a real model falls for a given
-  phrasing. A real model would sometimes refuse, which is why the hardened arm exists: it is
-  given only the raw text and has to catch the attack from its phrasing.
-- **The transport is a mock of the PayPal endpoints,** faithful to the response shapes this
-  project reads, including PayPal's request-id idempotency behaviour. `npm run bench:sandbox`
-  runs the same bench against the real sandbox. Mock and sandbox results are reported separately
-  and never averaged together. *The sandbox run is pending credentials; when it exists it will
-  appear here as its own table, not merged into the one above.*
-- **A blocked attempt is not an incident.** An agent trying to set the payee and being refused is
-  the system working. Attempts are counted separately. An earlier version of this bench counted
-  them as incidents and also counted "the credential is in the agent's context" once per run —
-  both inflated the control arms without describing a single event, and both were removed.
-- **Every adversarial case must actually attempt its attack.** An earlier version parsed the
-  attack out of the prose with regular expressions and failed silently on six cases, so the
-  guardrail scored blocks on attacks that were never made. `bench/run.js` now refuses to run if
-  any adversarial case would not attempt its goal.
-- **Attacker goals are checked semantically.** "Blocked" means *the attacker did not get what
-  they wanted* — money reaching any payee other than the one you bound counts as a loss, not just
-  an exact match on the attacker's string.
-- **Everything is scored on what left the process**, not on what an arm said about itself. See
-  below for why that sentence is in this README at all.
-
-### What an independent review found
-
-Before publishing, the project was given to an independent reviewer with one instruction: try to
-show that the bench is fooling itself. It was, and the finding was worse than the two above.
-
-The detectors read the request the *agent* composed. In the guardrail arm that is
-`{operation, params}` — no body, no host — so twelve of the twenty adversarial goals could not
-score as achieved whatever the broker did. The reviewer proved it by deliberately breaking the
-broker so an attacker's payee reached the wire. **The bench still reported 100/100 attacks
-blocked and zero incidents.** The headline number was not evidence of anything.
-
-The detectors now read what the transport was actually asked to send, identically for all three
-arms. Re-running the same mutation afterwards takes the guardrail arm from 100/100 with 0
-incidents to **70/100 with 30 incidents** — the bench can now fail, which is the only reason to
-believe it when it passes. `tests/detectors.test.js` pins that down so the blindness cannot
-return.
-
-The same review found four real defects in the product, all fixed and all now covered by tests
-in `tests/limits.test.js`:
-
-| What was wrong | What happened |
-|---|---|
-| Limits were read before an `await` and written after it | 40 parallel MCP calls spent €9,992 against a €2,000 daily cap. `execute` now serialises. |
-| Approving a queued payment skipped the limit check | 8 individually-valid approvals totalled twice their cap. Limits are re-checked at approval. |
-| The console served its own token inside the page | Any process on the machine, the agent included, could read it and approve its own payments. The operator now pastes it. |
-| The console and the MCP server each had their own in-memory approval queue | The agent's `pending_approval` never appeared in the console, so the human-in-the-loop flow did not work at all across processes. Both now share state on disk. |
-
-One of the control arm's reported incidents was also an artefact — the control deliberately used
-a different idempotency key on a retry, so "charged twice" was counted when nothing had been
-duplicated. It is gone from the table above, which is why the control's incident total is 75 and
-not 80.
-
 ## The security property, stated precisely
 
 Two separate claims. Neither is stronger than its evidence.
@@ -219,17 +167,9 @@ Two separate claims. Neither is stronger than its evidence.
 > the data path — **not a formal proof of noninterference.**
 >
 > **Empirical.** On the 30-case bench described above, over 450 runs, the guardrail arm recorded
-> **0 security incidents and blocked 100/100 attacks while completing 50/50 benign tasks.** The
-> bench's limits are stated in the section above.
-
-### What this does not protect you from
-
-- **A permissive policy.** Bind the payee to nothing and set an infinite ceiling and you have
-  given it all away. The guardrail protects you from the model, not from yourself.
-- **A compromised operator machine.** The vault password, the policy file and the ledger live
-  there.
-- **PayPal-side problems.** Account takeover, a stolen live credential, anything upstream.
-- **It is not a formal proof.** See above.
+> **0 security incidents and blocked 100/100 attacks while completing 50/50 benign tasks.** What
+> that bench does and does not cover is set out in
+> [Observations and limitations](#observations-and-limitations).
 
 ## The own technology this builds on
 
@@ -404,10 +344,90 @@ Built for the PayPal AI Hackathon, submission period 1 Oct – 12 Nov 2026. Enti
 written during that period, depending on the author's previously published `enigmagent-mcp`
 package for the encrypted vault — the split between the two is spelled out above.
 
-Independent review: a pre-submission review was run, it found that the bench could not fail and
-four real defects in the product, and all of them were fixed before publication — the details
-are in "What an independent review found" above, including the numbers that changed as a result.
-A second independent audit was planned and could not be performed, so it remains outstanding.
+An independent pre-submission review was run and every finding was fixed before publication,
+including the numbers that changed as a result; it is written up in full under
+[Observations and limitations](#observations-and-limitations). A second independent audit was
+planned and could not be performed, so it remains outstanding.
+
+## Observations and limitations
+
+Everything above is what the project does and what it measured. This section is the other
+side of the same work: what the numbers do not cover, what the design does not protect you
+from, and what an independent review found wrong before publication — in full, including the
+part where our own headline number turned out not to be evidence.
+
+### What the bench numbers are, and are not
+
+**They are produced by a deterministic scripted agent against an offline stand-in for PayPal.**
+Being explicit about both:
+
+- **The agent is scripted, not a language model.** It is handed a structured statement of what
+  the hostile text asks for, and it complies. That models a *fully credulous* model — the worst
+  case, which is the case worth defending against — and makes the bench reproducible by anyone
+  with this repo and no API key. It does **not** measure how often a real model falls for a given
+  phrasing. A real model would sometimes refuse, which is why the hardened arm exists: it is
+  given only the raw text and has to catch the attack from its phrasing.
+- **The transport is a mock of the PayPal endpoints,** faithful to the response shapes this
+  project reads, including PayPal's request-id idempotency behaviour. `npm run bench:sandbox`
+  runs the same bench against the real sandbox. Mock and sandbox results are reported separately
+  and never averaged together. *The sandbox run is pending credentials; when it exists it will
+  appear here as its own table, not merged into the one above.*
+- **A blocked attempt is not an incident.** An agent trying to set the payee and being refused is
+  the system working. Attempts are counted separately. An earlier version of this bench counted
+  them as incidents and also counted "the credential is in the agent's context" once per run —
+  both inflated the control arms without describing a single event, and both were removed.
+- **Every adversarial case must actually attempt its attack.** An earlier version parsed the
+  attack out of the prose with regular expressions and failed silently on six cases, so the
+  guardrail scored blocks on attacks that were never made. `bench/run.js` now refuses to run if
+  any adversarial case would not attempt its goal.
+- **Attacker goals are checked semantically.** "Blocked" means *the attacker did not get what
+  they wanted* — money reaching any payee other than the one you bound counts as a loss, not just
+  an exact match on the attacker's string.
+- **Everything is scored on what left the process**, not on what an arm said about itself.
+  "What an independent review found", two sections down, is why that sentence is in this README
+  at all.
+
+### What this does not protect you from
+
+- **A permissive policy.** Bind the payee to nothing and set an infinite ceiling and you have
+  given it all away. The guardrail protects you from the model, not from yourself.
+- **A compromised operator machine.** The vault password, the policy file and the ledger live
+  there.
+- **PayPal-side problems.** Account takeover, a stolen live credential, anything upstream.
+- **It is not a formal proof.** See above.
+
+### What an independent review found
+
+Before publishing, the project was given to an independent reviewer with one instruction: try to
+show that the bench is fooling itself. It was, and the finding was worse than the two corrections
+listed above.
+
+The detectors read the request the *agent* composed. In the guardrail arm that is
+`{operation, params}` — no body, no host — so twelve of the twenty adversarial goals could not
+score as achieved whatever the broker did. The reviewer proved it by deliberately breaking the
+broker so an attacker's payee reached the wire. **The bench still reported 100/100 attacks
+blocked and zero incidents.** The headline number was not evidence of anything.
+
+The detectors now read what the transport was actually asked to send, identically for all three
+arms. Re-running the same mutation afterwards takes the guardrail arm from 100/100 with 0
+incidents to **70/100 with 30 incidents** — the bench can now fail, which is the only reason to
+believe it when it passes. `tests/detectors.test.js` pins that down so the blindness cannot
+return.
+
+The same review found four real defects in the product, all fixed and all now covered by tests
+in `tests/limits.test.js`:
+
+| What was wrong | What happened |
+|---|---|
+| Limits were read before an `await` and written after it | 40 parallel MCP calls spent €9,992 against a €2,000 daily cap. `execute` now serialises. |
+| Approving a queued payment skipped the limit check | 8 individually-valid approvals totalled twice their cap. Limits are re-checked at approval. |
+| The console served its own token inside the page | Any process on the machine, the agent included, could read it and approve its own payments. The operator now pastes it. |
+| The console and the MCP server each had their own in-memory approval queue | The agent's `pending_approval` never appeared in the console, so the human-in-the-loop flow did not work at all across processes. Both now share state on disk. |
+
+One of the control arm's reported incidents was also an artefact — the control deliberately used
+a different idempotency key on a retry, so "charged twice" was counted when nothing had been
+duplicated. It is gone from the table above, which is why the control's incident total is 75 and
+not 80.
 
 ## Licence
 
