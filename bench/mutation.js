@@ -75,8 +75,8 @@ const MUTANTS = [
   },
   {
     id: 'M12', safeguard: 'requests run one at a time', file: 'src/broker.js',
-    from: '      await previous;\n      return await this.#executeSerial(request);',
-    to: '      return await this.#executeSerial(request);'
+    from: '      await previous;\n      return await this.#ledger.exclusive(() => this.#executeSerial(request));',
+    to: '      return await this.#ledger.exclusive(() => this.#executeSerial(request));'
   },
   {
     id: 'M13', safeguard: 'the response is reduced to listed fields', file: 'src/broker.js',
@@ -159,6 +159,8 @@ function main() {
     rmSync(dir, { recursive: true, force: true });
   }
 
+  // A mutant that no longer matches the source must stop the run, not shrink the denominator.
+  if (results.some(row => !row.applied)) throw new Error('a mutant did not apply; update bench/mutation.js');
   const applied = results.filter(row => row.applied);
   const report = {
     baseline,
