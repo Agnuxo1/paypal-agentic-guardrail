@@ -1,6 +1,6 @@
 {
   "name": "paypal-agentic-guardrail",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Let an AI agent run PayPal charges, refunds and payouts without ever holding the credential, choosing the payee or raising the amount.",
   "type": "module",
   "license": "MIT",
@@ -21,6 +21,8 @@
     "demo": "node src/cli.js demo",
     "bench": "node bench/run.js",
     "bench:sandbox": "node bench/run.js --transport sandbox",
+    "bench:llm": "node bench/run-llm.js",
+    "bench:mutation": "node bench/mutation.js",
     "test": "node --test \"tests/*.test.js\"",
     "policy:check": "node src/cli.js policy-check"
   },

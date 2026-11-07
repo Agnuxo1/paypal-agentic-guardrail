@@ -1,0 +1,7 @@
+PayPal Agentic Guardrail (c) 2026 Francisco Angulo de Lafuente, MIT licence.
+
+Depends on enigmagent-mcp (npm), by the same author, MIT.
+Checks requests against PayPal's public OpenAPI documents (paypal/paypal-rest-api-specifications);
+those documents are downloaded by the user and are not redistributed here.
+PayPal is a trademark of PayPal, Inc. This project is independent and is not endorsed by PayPal.
+All merchants, suppliers, customers, credentials and amounts in the bench are synthetic.

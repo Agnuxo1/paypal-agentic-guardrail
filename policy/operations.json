@@ -69,7 +69,7 @@
       "bound": {},
       "agent": {},
       "approval": "none",
-      "response": ["ok", "status"]
+      "response": ["ok", "status", "paypal_status"]
     },
     {
       "name": "refund_capture_eur",
@@ -135,7 +135,7 @@
       "bound": {},
       "agent": {},
       "approval": "none",
-      "response": ["ok", "status"]
+      "response": ["ok", "status", "paypal_status"]
     }
   ]
 }

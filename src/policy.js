@@ -1,3 +1,9 @@
+// SPDX-FileCopyrightText: 2026 Francisco Angulo de Lafuente
+// SPDX-License-Identifier: MIT
+// Research-Project: PayPal Agentic Guardrail
+// Research-Author: Francisco Angulo de Lafuente
+// Research-ORCID: https://orcid.org/0009-0001-1634-7063
+// Research-Date: 2026-11-07
 /**
  * The operator policy: load, validate, and apply.
  *
@@ -62,7 +68,7 @@ function movesMoney(apiKey) {
 const APPROVAL = /^(none|always|over_amount:(0|[1-9]\d{0,9})\.\d{2})$/;
 const RESPONSE_FIELDS = new Set([
   'ok', 'status', 'order_id', 'capture_id', 'authorization_id', 'refund_id',
-  'payout_batch_id', 'amount', 'currency_code', 'approve_url'
+  'payout_batch_id', 'amount', 'currency_code', 'approve_url', 'paypal_status'
 ]);
 
 function isObject(value) {
