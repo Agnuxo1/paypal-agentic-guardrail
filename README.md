@@ -642,7 +642,7 @@ One of the control arm's reported incidents was also an artefact — the control
 a different idempotency key on a retry, so "charged twice" was counted when nothing had been
 duplicated. It was removed, taking the control's incident total from 80 to 75 at the time.
 
-A second independent audit, by Codex on 7 November, took three rounds and found more of the same
+A second independent audit, by Codex on 7 November, took four rounds and found more of the same
 kind, all reproduced and fixed:
 
 | Defect | What happened | After the fix |
