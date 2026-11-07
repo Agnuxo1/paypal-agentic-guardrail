@@ -11,10 +11,10 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, rmSync } from 'node:fs';
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { loadPolicy, PolicyError, validateParameters } from '../src/policy.js';
+import { loadPolicy, loadPolicyFile, PolicyError, validateParameters } from '../src/policy.js';
 import { Ledger } from '../src/ledger.js';
 import { ApprovalQueue, PaymentOperationBroker } from '../src/broker.js';
 import { MockTransport } from '../src/transport.js';
@@ -263,6 +263,122 @@ test('two processes on one ledger cannot spend the daily cap twice', async () =>
     assert.ok(results.some(result => result.status === 'limit_daily_total_exceeded'));
     const reader = new Ledger(path);
     assert.equal(reader.verify().ok, true);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+function operationsPolicy() {
+  return loadPolicyFile(new URL('../policy/operations.json', import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1'), ENV);
+}
+
+test('captures count against their own daily cap', async () => {
+  let now = Date.UTC(2026, 10, 5, 12);
+  const broker = new PaymentOperationBroker({
+    policy: operationsPolicy(), transport: new MockTransport(), credentials,
+    ledger: new Ledger(null), clock: () => now
+  });
+  const batch = async () => {
+    const orders = [];
+    for (let i = 0; i < 8; i += 1) {
+      const created = await broker.execute({
+        operation: 'charge_customer_eur', params: { amount: `${236 + i}.${String(now % 97).padStart(2, "0")}`, sku: 'SKU-PRO' }
+      });
+      assert.equal(created.ok, true);
+      orders.push(created.order_id);
+    }
+    return orders;
+  };
+  const first = await batch();
+  now += 2 * 3600_000;
+  for (const id of first) {
+    assert.equal((await broker.execute({ operation: 'capture_order', reference: id })).ok, true);
+  }
+  now += 22 * 3600_000 + 60_000;
+  const second = await batch();
+  const results = [];
+  for (const id of second) results.push(await broker.execute({ operation: 'capture_order', reference: id }));
+  assert.ok(results.some(result => result.status === 'limit_daily_total_exceeded'));
+});
+
+test('an edited ledger stops all spending', async () => {
+  const dir = mkdtempSync(join(tmpdir(), 'guardrail-edited-'));
+  try {
+    const path = join(dir, 'ledger.jsonl');
+    const policy = loadPolicy(policyDoc(), ENV);
+    const first = new PaymentOperationBroker({
+      policy, transport: new MockTransport(), credentials, ledger: new Ledger(path)
+    });
+    const paid = await first.execute({ operation: 'charge_customer_eur', params: { amount: '200.00', sku: 'SKU-PRO' } });
+    assert.equal(paid.ok, true);
+    const row = JSON.parse(readFileSync(path, 'utf8').trim());
+    row.amount = '0.00';
+    writeFileSync(path, `${JSON.stringify(row)}\n`, 'utf8');
+    const second = new PaymentOperationBroker({
+      policy, transport: new MockTransport(), credentials, ledger: new Ledger(path)
+    });
+    const result = await second.execute({ operation: 'charge_customer_eur', params: { amount: '10.00', sku: 'SKU-PRO' } });
+    assert.equal(result.status, 'ledger_corrupt');
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('a rejection cannot succeed while the approval is paying', async () => {
+  let entered;
+  let open;
+  const reached = new Promise(done => { entered = done; });
+  const gate = new Promise(done => { open = done; });
+  class SlowTransport extends MockTransport {
+    async call(request) {
+      entered();
+      await gate;
+      return super.call(request);
+    }
+  }
+  const broker = new PaymentOperationBroker({
+    policy: operationsPolicy(), transport: new SlowTransport(), credentials, ledger: new Ledger(null)
+  });
+  const pending = await broker.execute({ operation: 'pay_supplier_eur', params: { amount: '300.00' } });
+  assert.equal(pending.status, 'pending_approval');
+  const approving = broker.executeApproved(pending.approval_id);
+  await reached;
+  const rejecting = broker.rejectApproval(pending.approval_id);
+  open();
+  assert.equal((await approving).ok, true);
+  assert.equal(await rejecting, false);
+});
+
+test('a rejection from another process waits for the approval in progress', async () => {
+  const dir = mkdtempSync(join(tmpdir(), 'guardrail-reject-'));
+  try {
+    const ledgerPath = join(dir, 'ledger.jsonl');
+    const queuePath = join(dir, 'approvals.json');
+    let entered;
+    let open;
+    const reached = new Promise(done => { entered = done; });
+    const gate = new Promise(done => { open = done; });
+    class SlowTransport extends MockTransport {
+      async call(request) {
+        entered();
+        await gate;
+        return super.call(request);
+      }
+    }
+    const make = transport => new PaymentOperationBroker({
+      policy: operationsPolicy(), transport, credentials,
+      ledger: new Ledger(ledgerPath), approvals: new ApprovalQueue(queuePath)
+    });
+    const console_ = make(new SlowTransport());
+    const other = make(new MockTransport());
+    const pending = await console_.execute({ operation: 'pay_supplier_eur', params: { amount: '300.00' } });
+    const approving = console_.executeApproved(pending.approval_id);
+    await reached;
+    const rejecting = other.rejectApproval(pending.approval_id);
+    await new Promise(done => setTimeout(done, 60));
+    open();
+    assert.equal((await approving).ok, true);
+    assert.equal(await rejecting, false);
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }

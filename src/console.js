@@ -82,7 +82,7 @@ export function createConsoleServer({ broker, policy, token = randomBytes(24).to
 
     if (request.method === 'POST' && url.pathname === '/api/reject') {
       return readBody(request, response, async body => {
-        const removed = broker.approvals.reject(body.approval_id);
+        const removed = await broker.rejectApproval(body.approval_id);
         json(response, 200, { rejected: removed });
       });
     }

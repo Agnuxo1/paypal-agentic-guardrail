@@ -71,6 +71,13 @@ export class LedgerBusyError extends Error {
   }
 }
 
+export class LedgerCorruptError extends Error {
+  constructor(seq) {
+    super(`ledger_corrupt:${seq}`);
+    this.code = 'ledger_corrupt';
+  }
+}
+
 export class Ledger {
   #path;
   #entries;
@@ -142,6 +149,11 @@ export class Ledger {
     }
     try {
       this.refresh();
+      // Limits are read from this file. If it was edited, the balance cannot be trusted, so
+      // nothing moves until a person has looked. This catches an edit, not a full rewrite of the
+      // chain: the chain has no key.
+      const check = this.verify();
+      if (!check.ok) throw new LedgerCorruptError(check.brokenAt);
       return await work();
     } finally {
       rmSync(lock, { recursive: true, force: true });
@@ -232,6 +244,13 @@ export class Ledger {
   /** Has this exact idempotency key already been executed? */
   hasRequestId(requestId) {
     return this.#entries.some(entry => entry.request_id === requestId && entry.outcome === 'executed');
+  }
+
+  /** The amount recorded when the broker issued this reference, or `null` if there is none. */
+  amountOfReference(kind, value) {
+    const entry = this.#entries.find(row =>
+      row.outcome === 'executed' && row.reference === value && row.reference_kind === kind);
+    return entry?.amount ?? null;
   }
 
   /**

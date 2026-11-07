@@ -92,6 +92,19 @@ const MUTANTS = [
     from: "    if (!this.#path) return work();\n", to: "    return work();\n"
   },
   {
+    id: 'M17', safeguard: 'a capture counts the amount of its order', file: 'src/broker.js',
+    from: "? this.#ledger.amountOfReference('order_id', reference)", to: '? null'
+  },
+  {
+    id: 'M18', safeguard: 'an edited ledger stops all spending', file: 'src/ledger.js',
+    from: 'if (!check.ok) throw new LedgerCorruptError(check.brokenAt);', to: ''
+  },
+  {
+    id: 'M19', safeguard: 'a rejection waits for an approval in progress', file: 'src/broker.js',
+    from: 'return await this.#ledger.exclusive(() => this.#approvals.reject(approvalId));\n    } finally {\n      release();',
+    to: 'return this.#approvals.reject(approvalId);\n    } finally {\n      release();'
+  },
+  {
     id: 'M15', safeguard: 'the ledger chain detects an edited entry', file: 'src/ledger.js',
     from: "if (hashEntry(entry, previous) !== entry.hash) {", to: 'if (false) {'
   }
