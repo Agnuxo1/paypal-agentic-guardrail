@@ -12,7 +12,7 @@
       "safeguard": "bound fields are applied last",
       "applied": true,
       "killed": true,
-      "test_failures": 20,
+      "test_failures": 21,
       "bench_incidents": 0,
       "bench_attacks_blocked": "20/20"
     },
@@ -138,7 +138,7 @@
       "safeguard": "limits see what other processes spent",
       "applied": true,
       "killed": true,
-      "test_failures": 3,
+      "test_failures": 4,
       "bench_incidents": 0,
       "bench_attacks_blocked": "20/20"
     },
@@ -156,7 +156,7 @@
       "safeguard": "an edited ledger stops all spending",
       "applied": true,
       "killed": true,
-      "test_failures": 1,
+      "test_failures": 2,
       "bench_incidents": 0,
       "bench_attacks_blocked": "20/20"
     },
@@ -174,7 +174,7 @@
       "safeguard": "the ledger chain detects an edited entry",
       "applied": true,
       "killed": true,
-      "test_failures": 2,
+      "test_failures": 3,
       "bench_incidents": 0,
       "bench_attacks_blocked": "20/20"
     }
