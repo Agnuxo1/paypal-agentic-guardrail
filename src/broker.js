@@ -1,3 +1,9 @@
+// SPDX-FileCopyrightText: 2026 Francisco Angulo de Lafuente
+// SPDX-License-Identifier: MIT
+// Research-Project: PayPal Agentic Guardrail
+// Research-Author: Francisco Angulo de Lafuente
+// Research-ORCID: https://orcid.org/0009-0001-1634-7063
+// Research-Date: 2026-11-07
 /**
  * The Payment Operation Broker — the new component this project contributes.
  *
@@ -76,6 +82,17 @@ const REFUSAL_HINTS = Object.freeze({
 });
 
 const CAPTURED_AMOUNT_PATH = ['purchase_units', 0, 'payments', 'captures', 0, 'amount', 'value'];
+
+/**
+ * PayPal's own state of an order or a payout batch. `status` in a result is the broker's verdict
+ * on the call, so without this a status lookup could only ever answer "executed", and one model
+ * read that as "already captured" and stopped. Only an upper-case token gets through: this field
+ * is the upstream's text, and free text must not reach the model.
+ */
+function paypalStatus(json) {
+  const value = json?.status ?? json?.batch_header?.batch_status ?? null;
+  return typeof value === 'string' && /^[A-Z_]{1,32}$/.test(value) ? value : null;
+}
 
 /**
  * The link a buyer opens to approve an order; PayPal will not capture an order until they have.
@@ -377,6 +394,7 @@ export class PaymentOperationBroker {
       if (name === 'amount') fields.amount = amount;
       else if (name === 'currency_code') fields.currency_code = this.#boundCurrency(operation);
       else if (name === 'approve_url') fields.approve_url = payerApprovalLink(response.json);
+      else if (name === 'paypal_status') fields.paypal_status = paypalStatus(response.json);
       else if (name === operation.endpoint.emits) fields[name] = emitted;
     }
     const check = assertNoCredential(fields, [credential.clientId, credential.clientSecret]);
