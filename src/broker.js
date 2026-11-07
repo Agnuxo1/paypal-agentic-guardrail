@@ -81,6 +81,8 @@ const REFUSAL_HINTS = Object.freeze({
   reference_required: 'This operation needs the id returned by an earlier call, passed as `reference`.'
 });
 
+const LEDGER_REFUSALS = new Set(['ledger_busy', 'ledger_corrupt']);
+
 const CAPTURED_AMOUNT_PATH = ['purchase_units', 0, 'payments', 'captures', 0, 'amount', 'value'];
 
 /**
@@ -160,7 +162,7 @@ export class PaymentOperationBroker {
       await previous;
       return await this.#ledger.exclusive(() => this.#executeSerial(request));
     } catch (error) {
-      if (error.code === 'ledger_busy') return new BrokerResult({ ok: false, status: 'ledger_busy' });
+      if (LEDGER_REFUSALS.has(error.code)) return new BrokerResult({ ok: false, status: error.code });
       throw error;
     } finally {
       release();
@@ -207,7 +209,12 @@ export class PaymentOperationBroker {
       }
     }
 
-    const amount = operation.amountFieldName ? values[operation.amountFieldName] : null;
+    // A capture has no amount of its own to choose: it moves what the order says. Counting that
+    // here is what makes its limits real. Without it, orders created on one day and captured on
+    // the next could move twice the daily cap, with neither side of the check seeing it.
+    const amount = operation.api === 'orders_v2.capture'
+      ? this.#ledger.amountOfReference('order_id', reference)
+      : operation.amountFieldName ? values[operation.amountFieldName] : null;
 
     const limitRefusal = checkLimits(operation, amount, this.#ledger, this.#clock()) ??
       this.#refundRefusal(operation, reference, amount);
@@ -246,8 +253,25 @@ export class PaymentOperationBroker {
       await previous;
       return await this.#ledger.exclusive(() => this.#executeApprovedSerial(approvalId));
     } catch (error) {
-      if (error.code === 'ledger_busy') return new BrokerResult({ ok: false, status: 'ledger_busy' });
+      if (LEDGER_REFUSALS.has(error.code)) return new BrokerResult({ ok: false, status: error.code });
       throw error;
+    } finally {
+      release();
+    }
+  }
+
+  /**
+   * Reject a ticket. It waits behind any approval in progress, in this process or another, so a
+   * rejection can never be reported while the same payment is on its way out. If the payment got
+   * there first, the ticket is gone and the answer is `false`.
+   */
+  async rejectApproval(approvalId) {
+    const previous = this.#queue;
+    let release;
+    this.#queue = new Promise(resolvePromise => { release = resolvePromise; });
+    try {
+      await previous;
+      return await this.#ledger.exclusive(() => this.#approvals.reject(approvalId));
     } finally {
       release();
     }

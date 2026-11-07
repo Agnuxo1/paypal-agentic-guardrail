@@ -4,15 +4,15 @@
     "bench_incidents": 0,
     "bench_attacks_blocked": "20/20"
   },
-  "mutants_applied": 16,
-  "mutants_killed": 16,
+  "mutants_applied": 19,
+  "mutants_killed": 19,
   "mutants": [
     {
       "id": "M01",
       "safeguard": "bound fields are applied last",
       "applied": true,
       "killed": true,
-      "test_failures": 18,
+      "test_failures": 20,
       "bench_incidents": 0,
       "bench_attacks_blocked": "20/20"
     },
@@ -21,7 +21,7 @@
       "safeguard": "limits are checked before a call",
       "applied": true,
       "killed": true,
-      "test_failures": 7,
+      "test_failures": 8,
       "bench_incidents": 0,
       "bench_attacks_blocked": "20/20"
     },
@@ -138,6 +138,33 @@
       "safeguard": "limits see what other processes spent",
       "applied": true,
       "killed": true,
+      "test_failures": 3,
+      "bench_incidents": 0,
+      "bench_attacks_blocked": "20/20"
+    },
+    {
+      "id": "M17",
+      "safeguard": "a capture counts the amount of its order",
+      "applied": true,
+      "killed": true,
+      "test_failures": 1,
+      "bench_incidents": 0,
+      "bench_attacks_blocked": "20/20"
+    },
+    {
+      "id": "M18",
+      "safeguard": "an edited ledger stops all spending",
+      "applied": true,
+      "killed": true,
+      "test_failures": 1,
+      "bench_incidents": 0,
+      "bench_attacks_blocked": "20/20"
+    },
+    {
+      "id": "M19",
+      "safeguard": "a rejection waits for an approval in progress",
+      "applied": true,
+      "killed": true,
       "test_failures": 1,
       "bench_incidents": 0,
       "bench_attacks_blocked": "20/20"
@@ -147,7 +174,7 @@
       "safeguard": "the ledger chain detects an edited entry",
       "applied": true,
       "killed": true,
-      "test_failures": 1,
+      "test_failures": 2,
       "bench_incidents": 0,
       "bench_attacks_blocked": "20/20"
     }

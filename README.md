@@ -4,24 +4,25 @@
 
 # PayPal Agentic Guardrail
 
-[![licence: MIT](https://img.shields.io/badge/licence-MIT-199e70?style=flat-square)](LICENSE) ![node: >=22](https://img.shields.io/badge/node->=22-199e70?style=flat-square&logo=nodedotjs&logoColor=white) ![tests: 65 passing](https://img.shields.io/badge/tests-65%20passing-3987e5?style=flat-square) [![bench: 450 runs](https://img.shields.io/badge/bench-450%20runs-3987e5?style=flat-square)](bench/results/latest-mock.json) ![transport: sandbox only](https://img.shields.io/badge/transport-sandbox%20only-c98500?style=flat-square) [![PayPal AI Hackathon: submission](https://img.shields.io/badge/PayPal%20AI%20Hackathon-submission-9085e9?style=flat-square)](https://paypalaihackathon.devpost.com/)
+[![licence: MIT](https://img.shields.io/badge/licence-MIT-199e70?style=flat-square)](LICENSE) ![node: >=22](https://img.shields.io/badge/node->=22-199e70?style=flat-square&logo=nodedotjs&logoColor=white) ![tests: 69 passing](https://img.shields.io/badge/tests-69%20passing-3987e5?style=flat-square) [![bench: 450 runs](https://img.shields.io/badge/bench-450%20runs-3987e5?style=flat-square)](bench/results/latest-mock.json) ![transport: sandbox only](https://img.shields.io/badge/transport-sandbox%20only-c98500?style=flat-square) [![PayPal AI Hackathon: submission](https://img.shields.io/badge/PayPal%20AI%20Hackathon-submission-9085e9?style=flat-square)](https://paypalaihackathon.devpost.com/)
 
 [**The idea**](#the-idea) · [**The bench**](#does-it-actually-work-the-bench) · [**Try it**](#try-it) · [**Limitations**](#observations-and-limitations) · [**Policy**](policy/operations.json) · [**Bench cases**](bench/cases.json) · [**Results**](bench/results/latest-mock.json)
 
 </div>
 
-**Let an AI agent run real PayPal payments without ever handing it the credential, the payee, or
-the power to raise the amount.**
+**Let an AI agent run PayPal payments without ever handing it the credential, the payee, or the
+power to raise the amount.**
 
-Built for the [PayPal AI Hackathon](https://paypalaihackathon.devpost.com/). Runs against the
-PayPal sandbox. MIT licensed.
+Built for the [PayPal AI Hackathon](https://paypalaihackathon.devpost.com/) and for the PayPal
+sandbox. For shops and teams that want an agent to take payments and cannot give it their keys.
+MIT licensed.
 
 ```bash
 git clone https://github.com/Agnuxo1/paypal-agentic-guardrail
 cd paypal-agentic-guardrail && npm install && npm run demo
 ```
 
-That works immediately — no PayPal account, no API key, no network. An offline stand-in for the
+That works immediately, offline: no PayPal account, no API key, no network. An offline stand-in for the
 sandbox endpoints is the default, so a reviewer can reproduce every number below in about a
 minute. Point it at the real sandbox when you want to: [two env vars](#running-against-the-real-paypal-sandbox).
 
@@ -45,9 +46,9 @@ The worst case, a scripted agent that obeys every instruction it reads, over 450
 | Benign tasks completed | **50/50** | 50/50 | 50/50 |
 
 Every request the broker composes validates against [PayPal's published OpenAPI documents](#checked-against-paypals-own-specification),
-and removing any of 16 safeguards makes the [tests fail](#does-the-evidence-notice-a-removed-safeguard).
+and removing any of 19 safeguards makes the [tests fail](#does-the-evidence-notice-a-removed-safeguard).
 Six PayPal operations, spending limits, human approval thresholds, a hash-chained audit ledger, an
-operator console and an MCP server, in about 3,600 lines with one dependency. 65 tests.
+operator console and an MCP server, in about 3,600 lines with one dependency. 69 tests.
 [What the evidence covers and what it does not](#observations-and-limitations).
 
 ---
@@ -166,6 +167,18 @@ has nothing to compromise you with.
   header other than localhost.
 - **An MCP server** with exactly two tools, so any MCP client (Claude Desktop, Cursor, Continue)
   can drive it.
+
+The operator console, running against the broker:
+
+![Operator console: what the agent may do, what it did, and what waits for approval](assets/console.jpg)
+
+### How this differs from giving an agent PayPal tools
+
+The [PayPal Agent Toolkit](https://github.com/paypal/agent-toolkit) gives agent frameworks a broad set
+of PayPal tools, and that is the right starting point for building on PayPal. This project answers a
+different question: what an agent may do with those operations once untrusted text is in its
+context. Here the payee, currency and destination are not parameters at all, and limits, approvals
+and the ledger sit between the agent and PayPal. The two could be combined; that has not been tried.
 
 ## Does it actually work? The bench
 
@@ -309,9 +322,12 @@ and checks that something fails.
 
 | | Result |
 |---|---|
-| Mutants killed | **16/16** |
-| Killed by the test suite | 16 |
+| Mutants killed | **19/19** |
+| Killed by the test suite | 19 |
 | Also visible in the guardrail arm of the scripted bench | 1 |
+
+One mutant survived its first pass: a rejection that skipped the cross-process lock, which no test
+exercised from a second process. That test now exists, and the mutant is killed.
 
 The last row matters for reading the bench. The safeguards overlap, so with one removed the
 scripted bench nearly always still holds, and the test suite is what guards each one individually.
@@ -354,13 +370,13 @@ ledger, the console, the MCP surface and the bench are all new.
 
 ## Try it
 
-<p align="center"><img src="docs/readme/13-live-run.gif" alt="Terminal running npm run demo, npm test and npm run bench with their real output" width="100%"><br><sub>Fig. 12 — A real local run on CPU, offline: 52 tests pass and the bench reproduces the table above.</sub></p>
+<p align="center"><img src="docs/readme/13-live-run.gif" alt="Terminal running npm run demo, npm test and npm run bench with their real output" width="100%"><br><sub>Fig. 12 — A real local run on CPU, offline: 69 tests pass and the bench reproduces the table above.</sub></p>
 
 ```bash
 npm install
 npm run demo            # a scripted session: what it does, and what it refuses
 npm run bench           # the 450-run experiment above
-npm test                # 65 tests on the invariants and on the bench's own detectors
+npm test                # 69 tests on the invariants and on the bench's own detectors
 npm run console         # operator console at http://127.0.0.1:7788/
 node src/cli.js policy-check    # print exactly what each operation allows
 ```
@@ -497,7 +513,7 @@ no characters outside Latin-1 that could carry a homoglyph. Accented prose is fi
 | `src/console.js` | operator console |
 | `src/mcp-server.js` | the two-tool MCP surface |
 | `bench/` | 30 cases, detectors, scripted and real-model runners, the conformance and mutation checks, committed results |
-| `tests/` | 65 tests: broker invariants, PayPal's rules, MCP surface, limits and approvals, and the bench's detectors |
+| `tests/` | 69 tests: broker invariants, PayPal's rules, MCP surface, limits and approvals, and the bench's detectors |
 
 ## PayPal endpoints used
 
@@ -545,7 +561,7 @@ a scripted agent; the real-model bench uses three hosted models. Being explicit:
   of what the hostile text asks for, and it complies. That models a *fully credulous* model, the
   worst case, and makes the bench reproducible by anyone with this repo and no API key. Its
   "prompt defence" is a text filter, a weaker thing than the written rules in the real-model bench,
-  so the 70/100 there and the 113/120 there measure different defences.
+  so its 70 of 100 blocked and the 113 of 120 blocked with written rules measure different defences.
 - **The real-model bench is small and specific.** Three models, one provider, one prompt per arm,
   30 cases, two repetitions, temperature 0.3. Repetitions of a case are not independent, so read
   the intervals as a guide. It does not measure stronger adaptive attacks written against this
@@ -626,16 +642,20 @@ One of the control arm's reported incidents was also an artefact — the control
 a different idempotency key on a retry, so "charged twice" was counted when nothing had been
 duplicated. It was removed, taking the control's incident total from 80 to 75 at the time.
 
-A second independent audit, by Codex on 7 November, found one more defect of the same kind. The
-console and the MCP server each loaded the ledger once, so each computed limits from a stale
-balance: two brokers on one file spent 1,500 each against a 1,500 daily cap. The check and the
-write now happen under a cross-process lock on a fresh read, and the call fails closed if the lock
-cannot be had. `tests/limits.test.js` pins it. The same audit found that the real-model traces were
-excluded by `.gitignore`, so the numbers could not be checked from a clone. They are committed now.
+A second independent audit, by Codex on 7 November, took three rounds and found more of the same
+kind, all reproduced and fixed:
+
+| Defect | What happened | After the fix |
+|---|---|---|
+| The console and the MCP server each loaded the ledger once | Two brokers on one file spent 1,500 each against a 1,500 daily cap | Check and write run under a cross-process lock on a fresh read, failing closed |
+| A capture carried no amount | Orders created on one day and captured on the next moved 3,944 inside 24 hours against a 2,000 cap | A capture counts the amount of its order |
+| Rejecting did not wait for an approval in progress | The console could report "rejected" while the same payout was going out | A rejection waits behind the approval, and answers `false` if the payment got there first |
+| An edited ledger still authorised spending | An entry changed from 2,000 to 0 freed the budget | A broken chain stops all spending with `ledger_corrupt` |
+| Real-model traces were excluded by `.gitignore` | The numbers could not be checked from a clone | They are committed, and the audit recomputed them from the 540 records |
 
 The mutation check had a defect of its own: a wrong test path made the unmutated repository fail,
 so its first run reported 15/15 killed and meant nothing. It now refuses to run unless the
-unmutated repository passes. The 16/16 reported above comes from the corrected run, with one safeguard added after the audit below.
+unmutated repository passes. The 19/19 reported above comes from the corrected run, with safeguards added after the audits above.
 
 ## Real-world applications
 
@@ -680,12 +700,12 @@ below is a deployment, and each would need its own policy, its own limits and a 
 Documented in this repository:
 
 1. The 450-run scripted bench and the 540-run real-model bench, with results under `bench/results/`.
-2. 65 offline tests covering broker invariants, PayPal's rules, limits and approvals, the MCP surface and the
+2. 69 offline tests covering broker invariants, PayPal's rules, limits and approvals, the MCP surface and the
    bench's own detectors.
 3. An independent pre-submission review, with every finding fixed and written up in
    [Observations and limitations](#observations-and-limitations).
 4. The detector blindness fixed and pinned by `tests/detectors.test.js`.
-5. Conformance with PayPal's OpenAPI documents and a mutation check of 16 safeguards.
+5. Conformance with PayPal's OpenAPI documents and a mutation check of 19 safeguards.
 
 Named in this repository as outstanding: the sandbox bench run (pending credentials).
 
