@@ -1,0 +1,167 @@
+{
+  "specification": "https://github.com/paypal/paypal-rest-api-specifications",
+  "commit": "90e8041ffe02d80c452d2b476bedd59a8d219bdc",
+  "routes_in_specification": 8,
+  "routes_total": 8,
+  "operations_valid": 6,
+  "operations_total": 6,
+  "negative_controls_rejected": 11,
+  "negative_controls_total": 11,
+  "routes": [
+    {
+      "api": "orders_v2.create",
+      "method": "POST",
+      "path": "/v2/checkout/orders",
+      "in_specification": true
+    },
+    {
+      "api": "orders_v2.show",
+      "method": "GET",
+      "path": "/v2/checkout/orders/{id}",
+      "in_specification": true
+    },
+    {
+      "api": "orders_v2.capture",
+      "method": "POST",
+      "path": "/v2/checkout/orders/{id}/capture",
+      "in_specification": true
+    },
+    {
+      "api": "orders_v2.authorize",
+      "method": "POST",
+      "path": "/v2/checkout/orders/{id}/authorize",
+      "in_specification": true
+    },
+    {
+      "api": "payments_v2.capture_show",
+      "method": "GET",
+      "path": "/v2/payments/captures/{id}",
+      "in_specification": true
+    },
+    {
+      "api": "payments_v2.refund",
+      "method": "POST",
+      "path": "/v2/payments/captures/{id}/refund",
+      "in_specification": true
+    },
+    {
+      "api": "payouts_v1.create",
+      "method": "POST",
+      "path": "/v1/payments/payouts",
+      "in_specification": true
+    },
+    {
+      "api": "payouts_v1.show",
+      "method": "GET",
+      "path": "/v1/payments/payouts/{id}",
+      "in_specification": true
+    }
+  ],
+  "operations": [
+    {
+      "operation": "charge_customer_eur",
+      "api": "orders_v2.create",
+      "route_found": true,
+      "schema": "checked",
+      "errors": [],
+      "valid": true
+    },
+    {
+      "operation": "capture_order",
+      "api": "orders_v2.capture",
+      "route_found": true,
+      "schema": "checked",
+      "errors": [],
+      "valid": true
+    },
+    {
+      "operation": "show_order",
+      "api": "orders_v2.show",
+      "route_found": true,
+      "schema": "no body",
+      "errors": [],
+      "valid": true
+    },
+    {
+      "operation": "refund_capture_eur",
+      "api": "payments_v2.refund",
+      "route_found": true,
+      "schema": "checked",
+      "errors": [],
+      "valid": true
+    },
+    {
+      "operation": "pay_supplier_eur",
+      "api": "payouts_v1.create",
+      "route_found": true,
+      "schema": "checked",
+      "errors": [],
+      "valid": true
+    },
+    {
+      "operation": "show_payout",
+      "api": "payouts_v1.show",
+      "route_found": true,
+      "schema": "no body",
+      "errors": [],
+      "valid": true
+    }
+  ],
+  "negative_controls": [
+    {
+      "control": "order without intent",
+      "rejected": true,
+      "first_error": ": 'intent' is a required property"
+    },
+    {
+      "control": "order without purchase_units",
+      "rejected": true,
+      "first_error": ": 'purchase_units' is a required property"
+    },
+    {
+      "control": "item without name (the body before the fix)",
+      "rejected": true,
+      "first_error": "purchase_units/0/items/0: 'name' is a required property"
+    },
+    {
+      "control": "item without quantity (the body before the fix)",
+      "rejected": true,
+      "first_error": "purchase_units/0/items/0: 'quantity' is a required property"
+    },
+    {
+      "control": "item without unit_amount (the body before the fix)",
+      "rejected": true,
+      "first_error": "purchase_units/0/items/0: 'unit_amount' is a required property"
+    },
+    {
+      "control": "amount as a number",
+      "rejected": true,
+      "first_error": "purchase_units/0/amount/value: 49 is not of type 'string'"
+    },
+    {
+      "control": "currency code of the wrong length",
+      "rejected": true,
+      "first_error": "purchase_units/0/amount/currency_code: 'EURO' is too long"
+    },
+    {
+      "control": "merchant id of the wrong shape",
+      "rejected": true,
+      "first_error": "purchase_units/0/payee/merchant_id: 'attacker' is too short"
+    },
+    {
+      "control": "refund amount as a number",
+      "rejected": true,
+      "first_error": "amount/value: 10 is not of type 'string'"
+    },
+    {
+      "control": "payout without items",
+      "rejected": true,
+      "first_error": ": 'items' is a required property"
+    },
+    {
+      "control": "payout without sender_batch_header",
+      "rejected": true,
+      "first_error": ": 'sender_batch_header' is a required property"
+    }
+  ]
+}

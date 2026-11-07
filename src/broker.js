@@ -158,7 +158,10 @@ export class PaymentOperationBroker {
     this.#queue = new Promise(resolvePromise => { release = resolvePromise; });
     try {
       await previous;
-      return await this.#executeSerial(request);
+      return await this.#ledger.exclusive(() => this.#executeSerial(request));
+    } catch (error) {
+      if (error.code === 'ledger_busy') return new BrokerResult({ ok: false, status: 'ledger_busy' });
+      throw error;
     } finally {
       release();
     }
@@ -241,6 +244,17 @@ export class PaymentOperationBroker {
     this.#queue = new Promise(resolvePromise => { release = resolvePromise; });
     try {
       await previous;
+      return await this.#ledger.exclusive(() => this.#executeApprovedSerial(approvalId));
+    } catch (error) {
+      if (error.code === 'ledger_busy') return new BrokerResult({ ok: false, status: 'ledger_busy' });
+      throw error;
+    } finally {
+      release();
+    }
+  }
+
+  async #executeApprovedSerial(approvalId) {
+    {
       const ticket = this.#approvals.peek(approvalId);
       if (!ticket) return new BrokerResult({ ok: false, status: 'approval_not_found' });
       const operation = this.#policy.operations.get(ticket.operation);
@@ -262,8 +276,6 @@ export class PaymentOperationBroker {
       // Keep the ticket only if the attempt never reached a decision, so the operator can retry.
       if (result.status !== 'transport_error') this.#approvals.take(approvalId);
       return result;
-    } finally {
-      release();
     }
   }
 
