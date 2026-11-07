@@ -88,6 +88,10 @@ const MUTANTS = [
     from: "throw new PolicyError('parameter_text_forbidden_content', field.name);", to: ';'
   },
   {
+    id: 'M16', safeguard: 'limits see what other processes spent', file: 'src/ledger.js',
+    from: "    if (!this.#path) return work();\n", to: "    return work();\n"
+  },
+  {
     id: 'M15', safeguard: 'the ledger chain detects an edited entry', file: 'src/ledger.js',
     from: "if (hashEntry(entry, previous) !== entry.hash) {", to: 'if (false) {'
   }

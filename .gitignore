@@ -12,9 +12,13 @@ ledger*.jsonl
 cassette*.json
 tape*.json
 
-# Bench output: the two committed result files are added explicitly.
+# Bench output: the results the README cites are committed so a clone can check them.
 bench/results/*
 !bench/results/latest-mock.json
+!bench/results/conformance.json
+!bench/results/mutation.json
+!bench/results/llm/
+!bench/results/llm-addendum-paypal-status/
 
 npm-debug.log*
 .DS_Store

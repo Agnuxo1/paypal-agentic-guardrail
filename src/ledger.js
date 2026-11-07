@@ -17,7 +17,7 @@
  */
 
 import { createHash } from 'node:crypto';
-import { appendFileSync, mkdirSync, readFileSync, existsSync } from 'node:fs';
+import { appendFileSync, mkdirSync, readFileSync, existsSync, rmSync, statSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { addDecimal, compareDecimal, subtractDecimal } from './policy.js';
 
@@ -61,11 +61,22 @@ function hashEntry(entry, previous) {
   return createHash('sha256').update(canonical, 'utf8').digest('hex');
 }
 
+const LOCK_WAIT_MS = 30_000;
+const LOCK_STALE_MS = 120_000;
+
+export class LedgerBusyError extends Error {
+  constructor() {
+    super('ledger_busy');
+    this.code = 'ledger_busy';
+  }
+}
+
 export class Ledger {
   #path;
   #entries;
   #last;
   #now;
+  #size = 0;
 
   constructor(path, now = () => Date.now()) {
     this.#now = now;
@@ -77,15 +88,68 @@ export class Ledger {
   }
 
   #load() {
-    const lines = readFileSync(this.#path, 'utf8').split('\n').filter(line => line.trim() !== '');
-    for (const line of lines) {
+    const text = readFileSync(this.#path, 'utf8');
+    // Only whole lines: another process may be halfway through an append.
+    const complete = text.slice(0, text.lastIndexOf('\n') + 1);
+    this.#entries = [];
+    this.#last = GENESIS;
+    for (const line of complete.split('\n')) {
+      if (line.trim() === '') continue;
       const entry = JSON.parse(line);
       this.#entries.push(entry);
       this.#last = entry.hash;
     }
+    this.#size = Buffer.byteLength(complete, 'utf8');
+  }
+
+  /** Pick up what other processes wrote. The console and the MCP server share this file. */
+  refresh() {
+    if (!this.#path || !existsSync(this.#path)) return;
+    if (statSync(this.#path).size !== this.#size) this.#load();
+  }
+
+  /**
+   * Run `work` holding the ledger across processes.
+   *
+   * A limit is only as good as the balance it reads. The console and the MCP server each hold a
+   * Ledger on the same file, and an independent audit showed each spending a full daily cap
+   * because neither saw the other's entries. The check and the write now happen under one lock,
+   * on a fresh read. If the lock cannot be had, the call fails closed.
+   */
+  async exclusive(work) {
+    if (!this.#path) return work();
+    const lock = `${this.#path}.lock`;
+    const deadline = Date.now() + LOCK_WAIT_MS;
+    for (;;) {
+      try {
+        mkdirSync(lock);
+        break;
+      } catch (error) {
+        if (error.code !== 'EEXIST') throw error;
+        let age = 0;
+        try {
+          age = Date.now() - statSync(lock).mtimeMs;
+        } catch {
+          continue;
+        }
+        if (age > LOCK_STALE_MS) {
+          rmSync(lock, { recursive: true, force: true });
+          continue;
+        }
+        if (Date.now() > deadline) throw new LedgerBusyError();
+        await new Promise(done => setTimeout(done, 20));
+      }
+    }
+    try {
+      this.refresh();
+      return await work();
+    } finally {
+      rmSync(lock, { recursive: true, force: true });
+    }
   }
 
   get entries() {
+    this.refresh();
     return this.#entries;
   }
 
@@ -118,7 +182,10 @@ export class Ledger {
     entry.hash = hashEntry(entry, this.#last);
     this.#last = entry.hash;
     this.#entries.push(entry);
-    if (this.#path) appendFileSync(this.#path, `${JSON.stringify(entry)}\n`, 'utf8');
+    if (this.#path) {
+      appendFileSync(this.#path, `${JSON.stringify(entry)}\n`, 'utf8');
+      this.#size = statSync(this.#path).size;
+    }
     return entry;
   }
 

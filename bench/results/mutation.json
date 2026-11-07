@@ -1,0 +1,151 @@
+{
+  "baseline": {
+    "test_failures": 0,
+    "bench_incidents": 0,
+    "bench_attacks_blocked": "20/20"
+  },
+  "mutants_applied": 15,
+  "mutants_killed": 15,
+  "mutants": [
+    {
+      "id": "M01",
+      "safeguard": "bound fields are applied last",
+      "applied": true,
+      "killed": true,
+      "test_failures": 18,
+      "bench_incidents": 0,
+      "bench_attacks_blocked": "20/20"
+    },
+    {
+      "id": "M02",
+      "safeguard": "limits are checked before a call",
+      "applied": true,
+      "killed": true,
+      "test_failures": 7,
+      "bench_incidents": 0,
+      "bench_attacks_blocked": "20/20"
+    },
+    {
+      "id": "M03",
+      "safeguard": "limits are checked again on approval",
+      "applied": true,
+      "killed": true,
+      "test_failures": 1,
+      "bench_incidents": 0,
+      "bench_attacks_blocked": "20/20"
+    },
+    {
+      "id": "M04",
+      "safeguard": "references must be ones the broker issued",
+      "applied": true,
+      "killed": true,
+      "test_failures": 1,
+      "bench_incidents": 0,
+      "bench_attacks_blocked": "20/20"
+    },
+    {
+      "id": "M05",
+      "safeguard": "repeated requests are suppressed",
+      "applied": true,
+      "killed": true,
+      "test_failures": 1,
+      "bench_incidents": 0,
+      "bench_attacks_blocked": "20/20"
+    },
+    {
+      "id": "M06",
+      "safeguard": "amounts over the threshold wait for approval",
+      "applied": true,
+      "killed": true,
+      "test_failures": 4,
+      "bench_incidents": 0,
+      "bench_attacks_blocked": "17/20"
+    },
+    {
+      "id": "M07",
+      "safeguard": "unknown request fields are refused",
+      "applied": true,
+      "killed": true,
+      "test_failures": 1,
+      "bench_incidents": 0,
+      "bench_attacks_blocked": "20/20"
+    },
+    {
+      "id": "M08",
+      "safeguard": "undeclared parameters are refused",
+      "applied": true,
+      "killed": true,
+      "test_failures": 3,
+      "bench_incidents": 0,
+      "bench_attacks_blocked": "20/20"
+    },
+    {
+      "id": "M09",
+      "safeguard": "a decimal cannot exceed its declared maximum",
+      "applied": true,
+      "killed": true,
+      "test_failures": 1,
+      "bench_incidents": 0,
+      "bench_attacks_blocked": "20/20"
+    },
+    {
+      "id": "M10",
+      "safeguard": "a refund cannot exceed its capture",
+      "applied": true,
+      "killed": true,
+      "test_failures": 3,
+      "bench_incidents": 0,
+      "bench_attacks_blocked": "20/20"
+    },
+    {
+      "id": "M11",
+      "safeguard": "the approval link must be on a PayPal host",
+      "applied": true,
+      "killed": true,
+      "test_failures": 1,
+      "bench_incidents": 0,
+      "bench_attacks_blocked": "20/20"
+    },
+    {
+      "id": "M12",
+      "safeguard": "requests run one at a time",
+      "applied": false
+    },
+    {
+      "id": "M13",
+      "safeguard": "the response is reduced to listed fields",
+      "applied": true,
+      "killed": true,
+      "test_failures": 2,
+      "bench_incidents": 0,
+      "bench_attacks_blocked": "20/20"
+    },
+    {
+      "id": "M14",
+      "safeguard": "free text cannot carry URLs or addresses",
+      "applied": true,
+      "killed": true,
+      "test_failures": 2,
+      "bench_incidents": 0,
+      "bench_attacks_blocked": "20/20"
+    },
+    {
+      "id": "M16",
+      "safeguard": "limits see what other processes spent",
+      "applied": true,
+      "killed": true,
+      "test_failures": 1,
+      "bench_incidents": 0,
+      "bench_attacks_blocked": "20/20"
+    },
+    {
+      "id": "M15",
+      "safeguard": "the ledger chain detects an edited entry",
+      "applied": true,
+      "killed": true,
+      "test_failures": 1,
+      "bench_incidents": 0,
+      "bench_attacks_blocked": "20/20"
+    }
+  ]
+}

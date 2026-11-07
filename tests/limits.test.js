@@ -240,3 +240,30 @@ test('a path that is a prefix of another is refused at load time', () => {
   };
   assert.throws(() => loadPolicy(doc, ENV), error => error.code === 'path_is_prefix_of_another');
 });
+
+test('two processes on one ledger cannot spend the daily cap twice', async () => {
+  const dir = mkdtempSync(join(tmpdir(), 'guardrail-shared-'));
+  try {
+    const path = join(dir, 'ledger.jsonl');
+    const policy = loadPolicy(policyDoc(), ENV);
+    const make = () => new PaymentOperationBroker({
+      policy, transport: new MockTransport(), credentials, ledger: new Ledger(path)
+    });
+    const brokers = [make(), make()];
+    const calls = [];
+    for (let i = 0; i < 12; i += 1) {
+      const amount = `${100 + i}.00`;
+      calls.push(brokers[i % 2].execute({
+        operation: 'charge_customer_eur', params: { amount, sku: 'SKU-PRO' }
+      }));
+    }
+    const results = await Promise.all(calls);
+    const spent = results.reduce((total, result) => total + (result.ok ? Number(result.amount) : 0), 0);
+    assert.ok(spent <= 500, `spent ${spent} against a 500.00 cap`);
+    assert.ok(results.some(result => result.status === 'limit_daily_total_exceeded'));
+    const reader = new Ledger(path);
+    assert.equal(reader.verify().ok, true);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});

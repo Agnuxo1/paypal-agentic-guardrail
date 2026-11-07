@@ -4,7 +4,7 @@
 
 # PayPal Agentic Guardrail
 
-[![licence: MIT](https://img.shields.io/badge/licence-MIT-199e70?style=flat-square)](LICENSE) ![node: >=22](https://img.shields.io/badge/node->=22-199e70?style=flat-square&logo=nodedotjs&logoColor=white) ![tests: 52 passing](https://img.shields.io/badge/tests-52%20passing-3987e5?style=flat-square) [![bench: 450 runs](https://img.shields.io/badge/bench-450%20runs-3987e5?style=flat-square)](bench/results/latest-mock.json) ![transport: sandbox only](https://img.shields.io/badge/transport-sandbox%20only-c98500?style=flat-square) [![PayPal AI Hackathon: submission](https://img.shields.io/badge/PayPal%20AI%20Hackathon-submission-9085e9?style=flat-square)](https://paypalaihackathon.devpost.com/)
+[![licence: MIT](https://img.shields.io/badge/licence-MIT-199e70?style=flat-square)](LICENSE) ![node: >=22](https://img.shields.io/badge/node->=22-199e70?style=flat-square&logo=nodedotjs&logoColor=white) ![tests: 65 passing](https://img.shields.io/badge/tests-65%20passing-3987e5?style=flat-square) [![bench: 450 runs](https://img.shields.io/badge/bench-450%20runs-3987e5?style=flat-square)](bench/results/latest-mock.json) ![transport: sandbox only](https://img.shields.io/badge/transport-sandbox%20only-c98500?style=flat-square) [![PayPal AI Hackathon: submission](https://img.shields.io/badge/PayPal%20AI%20Hackathon-submission-9085e9?style=flat-square)](https://paypalaihackathon.devpost.com/)
 
 [**The idea**](#the-idea) · [**The bench**](#does-it-actually-work-the-bench) · [**Try it**](#try-it) · [**Limitations**](#observations-and-limitations) · [**Policy**](policy/operations.json) · [**Bench cases**](bench/cases.json) · [**Results**](bench/results/latest-mock.json)
 
@@ -45,9 +45,9 @@ The worst case, a scripted agent that obeys every instruction it reads, over 450
 | Benign tasks completed | **50/50** | 50/50 | 50/50 |
 
 Every request the broker composes validates against [PayPal's published OpenAPI documents](#checked-against-paypals-own-specification),
-and removing any of 15 safeguards makes the [tests fail](#does-the-evidence-notice-a-removed-safeguard).
+and removing any of 16 safeguards makes the [tests fail](#does-the-evidence-notice-a-removed-safeguard).
 Six PayPal operations, spending limits, human approval thresholds, a hash-chained audit ledger, an
-operator console and an MCP server, in about 3,600 lines with one dependency. 64 tests.
+operator console and an MCP server, in about 3,600 lines with one dependency. 65 tests.
 [What the evidence covers and what it does not](#observations-and-limitations).
 
 ---
@@ -309,8 +309,8 @@ and checks that something fails.
 
 | | Result |
 |---|---|
-| Mutants killed | **15/15** |
-| Killed by the test suite | 15 |
+| Mutants killed | **16/16** |
+| Killed by the test suite | 16 |
 | Also visible in the guardrail arm of the scripted bench | 1 |
 
 The last row matters for reading the bench. The safeguards overlap, so with one removed the
@@ -360,7 +360,7 @@ ledger, the console, the MCP surface and the bench are all new.
 npm install
 npm run demo            # a scripted session: what it does, and what it refuses
 npm run bench           # the 450-run experiment above
-npm test                # 64 tests on the invariants and on the bench's own detectors
+npm test                # 65 tests on the invariants and on the bench's own detectors
 npm run console         # operator console at http://127.0.0.1:7788/
 node src/cli.js policy-check    # print exactly what each operation allows
 ```
@@ -497,7 +497,7 @@ no characters outside Latin-1 that could carry a homoglyph. Accented prose is fi
 | `src/console.js` | operator console |
 | `src/mcp-server.js` | the two-tool MCP surface |
 | `bench/` | 30 cases, detectors, scripted and real-model runners, the conformance and mutation checks, committed results |
-| `tests/` | 64 tests: broker invariants, PayPal's rules, MCP surface, limits and approvals, and the bench's detectors |
+| `tests/` | 65 tests: broker invariants, PayPal's rules, MCP surface, limits and approvals, and the bench's detectors |
 
 ## PayPal endpoints used
 
@@ -626,9 +626,16 @@ One of the control arm's reported incidents was also an artefact — the control
 a different idempotency key on a retry, so "charged twice" was counted when nothing had been
 duplicated. It was removed, taking the control's incident total from 80 to 75 at the time.
 
+A second independent audit, by Codex on 7 November, found one more defect of the same kind. The
+console and the MCP server each loaded the ledger once, so each computed limits from a stale
+balance: two brokers on one file spent 1,500 each against a 1,500 daily cap. The check and the
+write now happen under a cross-process lock on a fresh read, and the call fails closed if the lock
+cannot be had. `tests/limits.test.js` pins it. The same audit found that the real-model traces were
+excluded by `.gitignore`, so the numbers could not be checked from a clone. They are committed now.
+
 The mutation check had a defect of its own: a wrong test path made the unmutated repository fail,
 so its first run reported 15/15 killed and meant nothing. It now refuses to run unless the
-unmutated repository passes. The 15/15 reported above comes from the corrected run.
+unmutated repository passes. The 16/16 reported above comes from the corrected run, with one safeguard added after the audit below.
 
 ## Real-world applications
 
@@ -673,12 +680,12 @@ below is a deployment, and each would need its own policy, its own limits and a 
 Documented in this repository:
 
 1. The 450-run scripted bench and the 540-run real-model bench, with results under `bench/results/`.
-2. 64 offline tests covering broker invariants, PayPal's rules, limits and approvals, the MCP surface and the
+2. 65 offline tests covering broker invariants, PayPal's rules, limits and approvals, the MCP surface and the
    bench's own detectors.
 3. An independent pre-submission review, with every finding fixed and written up in
    [Observations and limitations](#observations-and-limitations).
 4. The detector blindness fixed and pinned by `tests/detectors.test.js`.
-5. Conformance with PayPal's OpenAPI documents and a mutation check of 15 safeguards.
+5. Conformance with PayPal's OpenAPI documents and a mutation check of 16 safeguards.
 
 Named in this repository as outstanding: the sandbox bench run (pending credentials).
 
