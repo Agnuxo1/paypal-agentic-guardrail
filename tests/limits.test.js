@@ -324,6 +324,32 @@ test('an edited ledger stops all spending', async () => {
   }
 });
 
+test('a same-size ledger edit stops an already-running broker', async () => {
+  const dir = mkdtempSync(join(tmpdir(), 'guardrail-same-size-'));
+  try {
+    const path = join(dir, 'ledger.jsonl');
+    const broker = new PaymentOperationBroker({
+      policy: loadPolicy(policyDoc(), ENV), transport: new MockTransport(),
+      credentials, ledger: new Ledger(path)
+    });
+    const first = await broker.execute({
+      operation: 'charge_customer_eur', params: { amount: '200.00', sku: 'SKU-PRO' }
+    });
+    assert.equal(first.ok, true);
+    const original = readFileSync(path, 'utf8');
+    const edited = original.replace('"amount":"200.00"', '"amount":"000.00"');
+    assert.notEqual(edited, original);
+    assert.equal(Buffer.byteLength(edited), Buffer.byteLength(original));
+    writeFileSync(path, edited, 'utf8');
+    const second = await broker.execute({
+      operation: 'charge_customer_eur', params: { amount: '10.00', sku: 'SKU-PRO' }
+    });
+    assert.equal(second.status, 'ledger_corrupt');
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
 test('a rejection cannot succeed while the approval is paying', async () => {
   let entered;
   let open;

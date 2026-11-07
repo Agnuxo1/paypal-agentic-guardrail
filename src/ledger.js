@@ -148,7 +148,16 @@ export class Ledger {
       }
     }
     try {
-      this.refresh();
+      // Re-read under the lock even when the byte count is unchanged: an edited amount can
+      // have the same length as the original and must still invalidate the chain.
+      if (!existsSync(this.#path)) {
+        if (this.#size > 0) throw new LedgerCorruptError(this.#entries.length + 1);
+      } else {
+        const diskSize = statSync(this.#path).size;
+        this.#load();
+        // A partial final line means the record is incomplete, not a safe balance to spend.
+        if (this.#size !== diskSize) throw new LedgerCorruptError(this.#entries.length + 1);
+      }
       // Limits are read from this file. If it was edited, the balance cannot be trusted, so
       // nothing moves until a person has looked. This catches an edit, not a full rewrite of the
       // chain: the chain has no key.

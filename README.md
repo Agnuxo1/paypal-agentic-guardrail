@@ -4,7 +4,7 @@
 
 # PayPal Agentic Guardrail
 
-[![licence: MIT](https://img.shields.io/badge/licence-MIT-199e70?style=flat-square)](LICENSE) ![node: >=22](https://img.shields.io/badge/node->=22-199e70?style=flat-square&logo=nodedotjs&logoColor=white) ![tests: 69 passing](https://img.shields.io/badge/tests-69%20passing-3987e5?style=flat-square) [![bench: 450 runs](https://img.shields.io/badge/bench-450%20runs-3987e5?style=flat-square)](bench/results/latest-mock.json) ![transport: sandbox only](https://img.shields.io/badge/transport-sandbox%20only-c98500?style=flat-square) [![PayPal AI Hackathon: submission](https://img.shields.io/badge/PayPal%20AI%20Hackathon-submission-9085e9?style=flat-square)](https://paypalaihackathon.devpost.com/)
+[![licence: MIT](https://img.shields.io/badge/licence-MIT-199e70?style=flat-square)](LICENSE) ![node: >=22](https://img.shields.io/badge/node->=22-199e70?style=flat-square&logo=nodedotjs&logoColor=white) ![tests: 70 passing](https://img.shields.io/badge/tests-70%20passing-3987e5?style=flat-square) [![bench: 450 runs](https://img.shields.io/badge/bench-450%20runs-3987e5?style=flat-square)](bench/results/latest-mock.json) ![transport: sandbox only](https://img.shields.io/badge/transport-sandbox%20only-c98500?style=flat-square) [![PayPal AI Hackathon: submission](https://img.shields.io/badge/PayPal%20AI%20Hackathon-submission-9085e9?style=flat-square)](https://paypalaihackathon.devpost.com/)
 
 [**The idea**](#the-idea) · [**The bench**](#does-it-actually-work-the-bench) · [**Try it**](#try-it) · [**Limitations**](#observations-and-limitations) · [**Policy**](policy/operations.json) · [**Bench cases**](bench/cases.json) · [**Results**](bench/results/latest-mock.json)
 
@@ -48,7 +48,7 @@ The worst case, a scripted agent that obeys every instruction it reads, over 450
 Every request the broker composes validates against [PayPal's published OpenAPI documents](#checked-against-paypals-own-specification),
 and removing any of 19 safeguards makes the [tests fail](#does-the-evidence-notice-a-removed-safeguard).
 Six PayPal operations, spending limits, human approval thresholds, a hash-chained audit ledger, an
-operator console and an MCP server, in about 3,600 lines with one dependency. 69 tests.
+operator console and an MCP server, in about 3,600 lines with one dependency. 70 tests.
 [What the evidence covers and what it does not](#observations-and-limitations).
 
 ---
@@ -370,13 +370,13 @@ ledger, the console, the MCP surface and the bench are all new.
 
 ## Try it
 
-<p align="center"><img src="docs/readme/13-live-run.gif" alt="Terminal running npm run demo, npm test and npm run bench with their real output" width="100%"><br><sub>Fig. 12 — A real local run on CPU, offline: 69 tests pass and the bench reproduces the table above.</sub></p>
+<p align="center"><img src="docs/readme/13-live-run.gif" alt="Terminal running npm run demo, npm test and npm run bench with their real output" width="100%"><br><sub>Fig. 12 — A real local run on CPU, offline: 70 tests pass and the bench reproduces the table above.</sub></p>
 
 ```bash
 npm install
 npm run demo            # a scripted session: what it does, and what it refuses
 npm run bench           # the 450-run experiment above
-npm test                # 69 tests on the invariants and on the bench's own detectors
+npm test                # 70 tests on the invariants and on the bench's own detectors
 npm run console         # operator console at http://127.0.0.1:7788/
 node src/cli.js policy-check    # print exactly what each operation allows
 ```
@@ -513,7 +513,7 @@ no characters outside Latin-1 that could carry a homoglyph. Accented prose is fi
 | `src/console.js` | operator console |
 | `src/mcp-server.js` | the two-tool MCP surface |
 | `bench/` | 30 cases, detectors, scripted and real-model runners, the conformance and mutation checks, committed results |
-| `tests/` | 69 tests: broker invariants, PayPal's rules, MCP surface, limits and approvals, and the bench's detectors |
+| `tests/` | 70 tests: broker invariants, PayPal's rules, MCP surface, limits and approvals, and the bench's detectors |
 
 ## PayPal endpoints used
 
@@ -650,7 +650,7 @@ kind, all reproduced and fixed:
 | The console and the MCP server each loaded the ledger once | Two brokers on one file spent 1,500 each against a 1,500 daily cap | Check and write run under a cross-process lock on a fresh read, failing closed |
 | A capture carried no amount | Orders created on one day and captured on the next moved 3,944 inside 24 hours against a 2,000 cap | A capture counts the amount of its order |
 | Rejecting did not wait for an approval in progress | The console could report "rejected" while the same payout was going out | A rejection waits behind the approval, and answers `false` if the payment got there first |
-| An edited ledger still authorised spending | An entry changed from 2,000 to 0 freed the budget | A broken chain stops all spending with `ledger_corrupt` |
+| An edited ledger still authorised spending | An entry changed from 2,000 to 0 freed the budget, even with a same-size edit under a running broker | The file is read and verified under the lock on every decision, and a broken chain stops all spending with `ledger_corrupt` |
 | Real-model traces were excluded by `.gitignore` | The numbers could not be checked from a clone | They are committed, and the audit recomputed them from the 540 records |
 
 The mutation check had a defect of its own: a wrong test path made the unmutated repository fail,
@@ -700,7 +700,7 @@ below is a deployment, and each would need its own policy, its own limits and a 
 Documented in this repository:
 
 1. The 450-run scripted bench and the 540-run real-model bench, with results under `bench/results/`.
-2. 69 offline tests covering broker invariants, PayPal's rules, limits and approvals, the MCP surface and the
+2. 70 offline tests covering broker invariants, PayPal's rules, limits and approvals, the MCP surface and the
    bench's own detectors.
 3. An independent pre-submission review, with every finding fixed and written up in
    [Observations and limitations](#observations-and-limitations).
