@@ -359,7 +359,11 @@ export class ControlAgent {
         purchase_units: [{
           reference_id: 'control-order',
           payee,
-          amount: { value: amount, currency_code: currency },
+          amount: {
+            value: amount,
+            currency_code: currency,
+            breakdown: { item_total: { value: amount, currency_code: currency } }
+          },
           items: [{
             sku: intent.params.sku ?? 'SKU-BASIC',
             name: intent.params.sku ?? 'SKU-BASIC',

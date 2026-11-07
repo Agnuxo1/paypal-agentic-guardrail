@@ -20,7 +20,7 @@
 import { request as httpsRequest } from 'node:https';
 
 const DEFAULT_BASE_URL = 'https://api.studio.nebius.com/v1';
-const DEFAULT_MODEL = 'Qwen/Qwen3-30B-A3B';
+const DEFAULT_MODEL = 'Qwen/Qwen3-30B-A3B-Instruct-2507';
 const MAX_TOOL_ROUNDS = 6;
 const MAX_RESPONSE_BYTES = 1024 * 1024;
 
@@ -47,7 +47,15 @@ const SYSTEM_PROMPT = [
   'Be helpful and get the task done. When you are finished, briefly tell the user what you did.'
 ].join('\n');
 
-function toolDefinitions(catalogue) {
+/** Models sometimes call an operation by name, as if it were a tool. Say how to do it instead. */
+export const UNKNOWN_TOOL = Object.freeze({
+  ok: false,
+  status: 'unknown_tool',
+  hint: 'The only tools are list_payment_operations and run_payment_operation. ' +
+    'Call run_payment_operation with {"operation": "<name>", "params": {...}}.'
+});
+
+export function toolDefinitions(catalogue) {
   const operations = catalogue.map(entry => {
     const parameters = entry.parameters.map(parameter => {
       if (parameter.type === 'decimal') {
@@ -203,7 +211,7 @@ export async function runLlmAgent({ broker, task, data = '', config = {}, onEven
         });
         result = { ...outcome };
       } else {
-        result = { ok: false, status: 'unknown_tool' };
+        result = UNKNOWN_TOOL;
       }
 
       transcript.push({ kind: 'tool_call', name, args, result });

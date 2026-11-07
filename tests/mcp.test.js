@@ -81,7 +81,7 @@ test('a legitimate call executes and returns only the listed fields', async () =
   const result = resultOf(response);
   assert.equal(result.ok, true);
   assert.equal(response.result.isError, false);
-  assert.deepEqual(Object.keys(result).sort(), ['amount', 'currency_code', 'ok', 'order_id', 'status']);
+  assert.deepEqual(Object.keys(result).sort(), ['amount', 'approve_url', 'currency_code', 'ok', 'order_id', 'status']);
 });
 
 test('an injected payee is refused and reported as an error to the client', async () => {

@@ -31,10 +31,14 @@ function policyDoc(overrides = {}) {
         bound: {
           intent: 'CAPTURE',
           'purchase_units[0].payee.merchant_id': '${OPERATOR_MERCHANT_ID}',
-          'purchase_units[0].amount.currency_code': 'EUR'
+          'purchase_units[0].amount.currency_code': 'EUR',
+          'purchase_units[0].amount.breakdown.item_total.currency_code': 'EUR',
+          'purchase_units[0].items[0].name': 'Item',
+          'purchase_units[0].items[0].quantity': '1',
+          'purchase_units[0].items[0].unit_amount.currency_code': 'EUR'
         },
         agent: {
-          amount: { path: 'purchase_units[0].amount.value', type: 'decimal', min: '1.00', max: '250.00' },
+          amount: { path: 'purchase_units[0].amount.value', mirror: ['purchase_units[0].amount.breakdown.item_total.value', 'purchase_units[0].items[0].unit_amount.value'], type: 'decimal', min: '1.00', max: '250.00' },
           sku: { path: 'purchase_units[0].items[0].sku', type: 'enum', values: ['SKU-BASIC', 'SKU-PRO'] }
         },
         limits: { per_call_max: '250.00', daily_total_max: '400.00', max_calls_per_hour: 3 },
