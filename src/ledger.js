@@ -13,7 +13,7 @@
 import { createHash } from 'node:crypto';
 import { appendFileSync, mkdirSync, readFileSync, existsSync } from 'node:fs';
 import { dirname } from 'node:path';
-import { addDecimal, compareDecimal } from './policy.js';
+import { addDecimal, compareDecimal, subtractDecimal } from './policy.js';
 
 export const GENESIS = '0'.repeat(64);
 
@@ -159,6 +159,26 @@ export class Ledger {
   /** Has this exact idempotency key already been executed? */
   hasRequestId(requestId) {
     return this.#entries.some(entry => entry.request_id === requestId && entry.outcome === 'executed');
+  }
+
+  /**
+   * What can still be refunded on a capture, as a decimal string, or `null` when the capture's
+   * amount was never recorded. Counts every executed refund, so partial refunds add up.
+   */
+  refundableOnCapture(captureId) {
+    const capture = this.#entries.find(entry =>
+      entry.outcome === 'executed' && entry.reference === captureId &&
+      entry.reference_kind === 'capture_id');
+    const captured = /(?:^|\|)captured:(\d+\.\d{2})(?:\||$)/.exec(capture?.detail ?? '')?.[1];
+    if (!captured) return null;
+    let refunded = '0.00';
+    for (const entry of this.#entries) {
+      if (entry.outcome !== 'executed' || entry.amount === null) continue;
+      if ((entry.detail ?? '').split('|').includes(`capture:${captureId}`)) {
+        refunded = addDecimal(refunded, entry.amount);
+      }
+    }
+    return subtractDecimal(captured, refunded);
   }
 
   /** References the broker itself issued, so the agent can only point at real prior results. */

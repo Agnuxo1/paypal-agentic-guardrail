@@ -28,7 +28,7 @@
 import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';
-import { composeBody, PolicyError, validateParameters } from './policy.js';
+import { compareDecimal, composeBody, PolicyError, validateParameters } from './policy.js';
 import { checkLimits } from './ledger.js';
 import { REFERENCE_PATHS, readPath } from './paypal-api.js';
 import { assertNoCredential } from './credentials.js';
@@ -59,6 +59,38 @@ export class BrokerResult {
   constructor(fields) {
     Object.assign(this, fields);
     Object.freeze(this);
+  }
+}
+
+/**
+ * Fixed text that tells a model how to correct an honest mistake. Without it, smaller models
+ * repeated the same malformed call until they ran out of rounds. Hints are constants: nothing
+ * from the request or the policy is echoed, so they reveal no bound value.
+ */
+const REFUSAL_HINTS = Object.freeze({
+  parameter_not_decimal: 'Send the amount as a string with two decimals, for example "49.00".',
+  parameter_missing: 'A required parameter is missing. Call list_payment_operations for the exact parameters.',
+  parameter_not_allowed: 'That parameter does not exist on this operation. Call list_payment_operations for the exact parameters.',
+  operation_not_allowed: 'That operation is not available. Call list_payment_operations for the operations you may run.',
+  reference_required: 'This operation needs the id returned by an earlier call, passed as `reference`.'
+});
+
+const CAPTURED_AMOUNT_PATH = ['purchase_units', 0, 'payments', 'captures', 0, 'amount', 'value'];
+
+/**
+ * The link a buyer opens to approve an order; PayPal will not capture an order until they have.
+ * This is the one upstream value passed back whole, so it is only accepted on PayPal's own hosts:
+ * anything else becomes `null`, and the agent can never be handed a look-alike to give a buyer.
+ */
+function payerApprovalLink(json) {
+  const links = Array.isArray(json?.links) ? json.links : [];
+  const link = links.find(entry => entry?.rel === 'payer-action' || entry?.rel === 'approve');
+  try {
+    const url = new URL(link?.href ?? '');
+    const onPayPal = /^(www\.)?(sandbox\.)?paypal\.com$/.test(url.hostname);
+    return url.protocol === 'https:' && onPayPal ? url.href : null;
+  } catch {
+    return null;
   }
 }
 
@@ -157,7 +189,8 @@ export class PaymentOperationBroker {
 
     const amount = operation.amountFieldName ? values[operation.amountFieldName] : null;
 
-    const limitRefusal = checkLimits(operation, amount, this.#ledger, this.#clock());
+    const limitRefusal = checkLimits(operation, amount, this.#ledger, this.#clock()) ??
+      this.#refundRefusal(operation, reference, amount);
     if (limitRefusal) {
       return this.#refuse(operation, limitRefusal.code, limitRefusal.detail, { amount });
     }
@@ -199,7 +232,8 @@ export class PaymentOperationBroker {
         return new BrokerResult({ ok: false, status: 'operation_not_allowed' });
       }
 
-      const limitRefusal = checkLimits(operation, ticket.amount, this.#ledger, this.#clock());
+      const limitRefusal = checkLimits(operation, ticket.amount, this.#ledger, this.#clock()) ??
+        this.#refundRefusal(operation, ticket.reference, ticket.amount);
       if (limitRefusal) {
         this.#approvals.take(approvalId);
         return this.#refuse(operation, limitRefusal.code, limitRefusal.detail, { amount: ticket.amount });
@@ -214,6 +248,21 @@ export class PaymentOperationBroker {
     } finally {
       release();
     }
+  }
+
+  /**
+   * A refund may not exceed what is left of its capture. The limits above cap the operator's
+   * exposure per call and per day; this caps it per payment, so an agent cannot return 240.00
+   * on a 49.00 sale just because 240.00 is inside the range.
+   */
+  #refundRefusal(operation, reference, amount) {
+    if (operation.api !== 'payments_v2.refund' || amount === null) return null;
+    const remaining = this.#ledger.refundableOnCapture(reference);
+    if (remaining === null) return { code: 'capture_amount_unknown', detail: reference };
+    if (compareDecimal(amount, remaining) > 0) {
+      return { code: 'refund_exceeds_capture', detail: `${amount} > ${remaining}` };
+    }
+    return null;
   }
 
   #requiresApproval(operation, amount) {
@@ -295,6 +344,14 @@ export class PaymentOperationBroker {
       ? readPath(response.json, REFERENCE_PATHS[operation.endpoint.emits]) ?? null
       : null;
 
+    const notes = [];
+    if (approved) notes.push('operator_approved');
+    if (operation.endpoint.emits === 'capture_id') {
+      const captured = readPath(response.json, CAPTURED_AMOUNT_PATH);
+      if (typeof captured === 'string' && /^\d+\.\d{2}$/.test(captured)) notes.push(`captured:${captured}`);
+    }
+    if (operation.api === 'payments_v2.refund') notes.push(`capture:${reference}`);
+
     this.#record({
       operation: operation.name, api: operation.api, outcome: 'executed',
       status: String(response.status), amount,
@@ -302,7 +359,7 @@ export class PaymentOperationBroker {
       reference: emitted ?? reference,
       reference_kind: operation.endpoint.emits ?? operation.endpoint.reference,
       request_id: requestId,
-      detail: approved ? 'operator_approved' : null
+      detail: notes.length > 0 ? notes.join('|') : null
     });
 
     return this.#reduce(operation, response, emitted, amount, credential);
@@ -319,6 +376,7 @@ export class PaymentOperationBroker {
       if (name === 'ok' || name === 'status') continue;
       if (name === 'amount') fields.amount = amount;
       else if (name === 'currency_code') fields.currency_code = this.#boundCurrency(operation);
+      else if (name === 'approve_url') fields.approve_url = payerApprovalLink(response.json);
       else if (name === operation.endpoint.emits) fields[name] = emitted;
     }
     const check = assertNoCredential(fields, [credential.clientId, credential.clientSecret]);
@@ -375,7 +433,8 @@ export class PaymentOperationBroker {
       amount: extra.amount ?? null,
       detail: detail ? `${code}:${String(detail).slice(0, 160)}` : code
     });
-    return new BrokerResult({ ok: false, status: code });
+    const hint = REFUSAL_HINTS[code];
+    return new BrokerResult({ ok: false, status: code, ...(hint ? { hint } : {}) });
   }
 }
 

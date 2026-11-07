@@ -126,6 +126,29 @@ export class HttpsTransport {
  * the sandbox: `bench/run.js --transport sandbox` is what produces sandbox-verified numbers,
  * and the report keeps the two apart.
  */
+const cents = value => Math.round(Number(value) * 100);
+const fromCents = value => (value / 100).toFixed(2);
+
+function unprocessable(issue) {
+  return { status: 422, json: { name: 'UNPROCESSABLE_ENTITY', details: [{ issue }] }, text: '' };
+}
+
+/** The rules PayPal enforces when an order lists items; the sandbox answers 422 to each. */
+function orderBodyProblem(unit) {
+  const items = unit.items ?? [];
+  if (items.length === 0) return null;
+  const total = unit.amount?.breakdown?.item_total;
+  if (!total) return 'ITEM_TOTAL_REQUIRED';
+  let sum = 0;
+  for (const item of items) {
+    if (!item.name || !item.quantity || !item.unit_amount) return 'MISSING_REQUIRED_PARAMETER';
+    sum += cents(item.unit_amount.value) * Number(item.quantity);
+  }
+  if (sum !== cents(total.value)) return 'ITEM_TOTAL_MISMATCH';
+  if (cents(total.value) !== cents(unit.amount.value)) return 'AMOUNT_MISMATCH';
+  return null;
+}
+
 export class MockTransport {
   #orders = new Map();
   #captures = new Map();
@@ -159,8 +182,10 @@ export class MockTransport {
     const id = suffixId(path);
 
     if (method === 'POST' && path === '/v2/checkout/orders') {
-      const orderId = `MOCK-ORDER-${shortHash(JSON.stringify(body))}`;
       const unit = body?.purchase_units?.[0] ?? {};
+      const invalid = orderBodyProblem(unit);
+      if (invalid) return unprocessable(invalid);
+      const orderId = `MOCK-ORDER-${shortHash(JSON.stringify(body))}`;
       this.#orders.set(orderId, {
         status: 'CREATED',
         amount: unit.amount?.value ?? null,
@@ -169,7 +194,14 @@ export class MockTransport {
       });
       return {
         status: 201,
-        json: { id: orderId, status: 'CREATED', links: [] },
+        json: {
+          id: orderId,
+          status: 'CREATED',
+          links: [{
+            rel: 'approve', method: 'GET',
+            href: `https://www.sandbox.paypal.com/checkoutnow?token=${orderId}`
+          }]
+        },
         text: ''
       };
     }
@@ -250,6 +282,9 @@ export class MockTransport {
       const capture = this.#captures.get(captureId);
       if (!capture) return notFound();
       const value = body?.amount?.value ?? capture.amount;
+      const refunded = cents(capture.refunded) + cents(value);
+      if (refunded > cents(capture.amount)) return unprocessable('REFUND_AMOUNT_EXCEEDED');
+      capture.refunded = fromCents(refunded);
       return {
         status: 201,
         json: {

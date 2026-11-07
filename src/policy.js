@@ -62,7 +62,7 @@ function movesMoney(apiKey) {
 const APPROVAL = /^(none|always|over_amount:(0|[1-9]\d{0,9})\.\d{2})$/;
 const RESPONSE_FIELDS = new Set([
   'ok', 'status', 'order_id', 'capture_id', 'authorization_id', 'refund_id',
-  'payout_batch_id', 'amount', 'currency_code'
+  'payout_batch_id', 'amount', 'currency_code', 'approve_url'
 ]);
 
 function isObject(value) {
@@ -76,6 +76,17 @@ export function compareDecimal(a, b) {
   const left = BigInt(ai) * 100n + BigInt(af);
   const right = BigInt(bi) * 100n + BigInt(bf);
   return left === right ? 0 : (left < right ? -1 : 1);
+}
+
+/** `a - b` on decimal strings, floored at zero: nothing is ever refundable below nothing. */
+export function subtractDecimal(a, b) {
+  const cents = value => {
+    const [whole, fraction] = value.split('.');
+    return BigInt(whole) * 100n + BigInt(fraction);
+  };
+  const left = cents(a) - cents(b);
+  const result = left < 0n ? 0n : left;
+  return `${result / 100n}.${String(result % 100n).padStart(2, '0')}`;
 }
 
 export function addDecimal(a, b) {
@@ -118,7 +129,16 @@ export function setPath(target, steps, value) {
 function validateAgentField(name, spec) {
   if (!isObject(spec)) throw new PolicyError('invalid_agent_field', name);
   if (!FIELD_TYPES.has(spec.type)) throw new PolicyError('invalid_field_type', `${name}:${spec.type}`);
-  const field = { name, type: spec.type, path: parsePath(spec.path) };
+  const field = { name, type: spec.type, path: parsePath(spec.path), mirror: Object.freeze([]) };
+  // PayPal repeats an order's amount in the item price and the breakdown, and rejects the order
+  // when they disagree. `mirror` writes the one validated value to those paths, so the agent
+  // still chooses a single number and the copies cannot drift apart.
+  if (spec.mirror !== undefined) {
+    if (spec.type !== 'decimal' || !Array.isArray(spec.mirror)) {
+      throw new PolicyError('invalid_mirror', name);
+    }
+    field.mirror = Object.freeze(spec.mirror.map(parsePath));
+  }
   if (spec.type === 'decimal') {
     if (!DECIMAL.test(spec.min ?? '') || !DECIMAL.test(spec.max ?? '')) {
       throw new PolicyError('decimal_bounds_required', name);
@@ -185,7 +205,7 @@ function validateOperation(raw, index) {
     ...derived.map(entry => entry.path.join('.'))
   ]);
   for (const field of agent) {
-    if (reservedPaths.has(field.path.join('.'))) {
+    if ([field.path, ...field.mirror].some(path => reservedPaths.has(path.join('.')))) {
       throw new PolicyError('agent_field_collides_with_bound', `${raw.name}.${field.name}`);
     }
   }
@@ -248,7 +268,7 @@ function validateOperation(raw, index) {
   const allPaths = [
     ...bound.map(entry => entry.path.join('.')),
     ...derived.map(entry => entry.path.join('.')),
-    ...agent.map(field => field.path.join('.'))
+    ...agent.flatMap(field => [field.path, ...field.mirror].map(path => path.join('.')))
   ];
   for (const outer of allPaths) {
     for (const inner of allPaths) {
@@ -409,6 +429,7 @@ export function composeBody(operation, values, derivedValues = {}) {
   const body = {};
   for (const field of operation.agent) {
     setPath(body, field.path, values[field.name]);
+    for (const path of field.mirror) setPath(body, path, values[field.name]);
   }
   for (const entry of operation.bound) {
     setPath(body, entry.path, entry.value);
