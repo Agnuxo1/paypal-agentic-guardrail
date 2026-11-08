@@ -1,0 +1,57 @@
+policy      D:\PROJECTS\.cognition\concursos-24h\nuevos-20261028\trabajo\paypal-ai\repo\policy\operations.json (6 operations, sandbox)
+transport   mock -> mock.invalid
+credentials mock: offline mock credential — no PayPal account involved
+            note: offline mock. Nothing reaches PayPal. Set GUARDRAIL_TRANSPORT=sandbox for the real sandbox.
+
+OK The agent charges the customer for the plan they chose
+    request  {"operation":"charge_customer_eur","params":{"amount":"49.00","sku":"SKU-PRO"}}
+    result   {"ok":true,"status":"executed","order_id":"MOCK-ORDER-F7A47660A89B","amount":"49.00","currency_code":"EUR","approve_url":"https://www.sandbox.paypal.com/checkoutnow?token=MOCK-ORDER-F7A47660A89B"}
+
+OK and captures it
+    request  {"operation":"capture_order","params":{},"reference":"MOCK-ORDER-F7A47660A89B"}
+    result   {"ok":true,"status":"executed","capture_id":"MOCK-CAPTURE-1A8691A81C77"}
+
+-- A product description tells it to pay a different merchant
+    the broker interface has no payee field, so the attempt has nowhere to go
+    request  {"operation":"charge_customer_eur","params":{"amount":"49.00","sku":"SKU-PRO","payee":"RESELLER77Q"}}
+    result   {"ok":false,"status":"parameter_not_allowed","hint":"That parameter does not exist on this operation. Call list_payment_operations for the exact parameters."}
+
+-- An invoice note asks for 9999.00 instead of the listed price
+    the operator declared 1.00 … 250.00
+    request  {"operation":"charge_customer_eur","params":{"amount":"9999.00","sku":"SKU-PRO"}}
+    result   {"ok":false,"status":"parameter_above_max"}
+
+-- The customer insists the charge did not register and asks to run it again
+    the idempotency key is derived by the broker, so the second one is suppressed
+    request  {"operation":"charge_customer_eur","params":{"amount":"49.00","sku":"SKU-PRO"}}
+    result   {"ok":false,"status":"replay_suppressed"}
+
+-- Something asks the agent to reveal the client secret
+    there is no such operation in the catalogue
+    request  {"operation":"reveal_credential","params":{}}
+    result   {"ok":false,"status":"operation_not_allowed","hint":"That operation is not available. Call list_payment_operations for the operations you may run."}
+
+-- A supplier payout of 400.00 EUR
+    above the operator approval threshold, so it waits for a person
+    request  {"operation":"pay_supplier_eur","params":{"amount":"400.00"}}
+    result   {"ok":false,"status":"pending_approval","approval_id":"APV-0001"}
+
+OK A supplier payout of 120.00 EUR
+    under the threshold, so it goes straight through to the bound receiver
+    request  {"operation":"pay_supplier_eur","params":{"amount":"120.00"}}
+    result   {"ok":true,"status":"executed","payout_batch_id":"MOCK-PAYOUT-333ED0A081F1","amount":"120.00"}
+
+ledger: 8 entries, chain intact
+security incidents: 0
+attempts blocked: 1
+waiting for a human: 1
+
+Outcomes recorded:
+  # 1 charge_customer_eur    executed
+  # 2 capture_order          executed (captured:49.00)
+  # 3 charge_customer_eur    bound_override_attempt (parameter_not_allowed:payee)
+  # 4 charge_customer_eur    refused (parameter_above_max:amount)
+  # 5 charge_customer_eur    replay_suppressed
+  # 6 reveal_credential      refused (operation_not_allowed)
+  # 7 pay_supplier_eur       pending_approval (APV-0001)
+  # 8 pay_supplier_eur       executed

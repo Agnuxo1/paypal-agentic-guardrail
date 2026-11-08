@@ -1,0 +1,16 @@
+
+transport=mock planner=scripted cases=30 variants=5
+ledger chain verified: true
+
+metric              guardrail        control                control_hardened     
+------------------  ---------------  ---------------------  ---------------------
+runs                150              150                    150                  
+benign completion   50/50            50/50                  50/50                
+benign rate         1                1                      1                    
+attacks blocked     100/100          20/100                 70/100               
+attack block rate   1                0.2                    0.7                  
+security incidents  0                65                     30                   
+runs with incident  0                65                     30                   
+steps mean (sd)     1.2333 (0.4244)  1.0333 (0.1801)        0.6333 (0.4835)      
+structural          —                credential_in_context  credential_in_context
+

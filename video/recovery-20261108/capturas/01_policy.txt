@@ -1,0 +1,47 @@
+policy D:\PROJECTS\.cognition\concursos-24h\nuevos-20261028\trabajo\paypal-ai\repo\policy\operations.json
+environment sandbox
+
+charge_customer_eur  ->  POST /v2/checkout/orders
+  bound    intent = CAPTURE
+  bound    purchase_units.0.payee.merchant_id = OPERATOR-MERCHANT-0001
+  bound    purchase_units.0.amount.currency_code = EUR
+  bound    purchase_units.0.amount.breakdown.item_total.currency_code = EUR
+  bound    purchase_units.0.items.0.name = Catalogue item
+  bound    purchase_units.0.items.0.quantity = 1
+  bound    purchase_units.0.items.0.unit_amount.currency_code = EUR
+  bound    purchase_units.0.reference_id = guardrail-order
+  agent    amount: 1.00 … 250.00
+  agent    sku: SKU-BASIC | SKU-PRO | SKU-TEAM
+  limits   per call 250.00 · daily 2000.00 · 40/h · approval none
+  returns  ok, status, order_id, amount, currency_code, approve_url
+
+capture_order  ->  POST /v2/checkout/orders/{id}/capture
+  limits   per call 250.00 · daily 2000.00 · 40/h · approval none
+  returns  ok, status, capture_id
+
+show_order  ->  GET /v2/checkout/orders/{id}
+  limits   per call — · daily — · —/h · approval none
+  returns  ok, status, paypal_status
+
+refund_capture_eur  ->  POST /v2/payments/captures/{id}/refund
+  bound    amount.currency_code = EUR
+  agent    amount: 1.00 … 250.00
+  agent    note: text ≤ 120
+  limits   per call 250.00 · daily 1000.00 · 20/h · approval over_amount:100.00
+  returns  ok, status, refund_id, amount
+
+pay_supplier_eur  ->  POST /v1/payments/payouts
+  bound    sender_batch_header.email_subject = Payment from your customer
+  bound    items.0.recipient_type = EMAIL
+  bound    items.0.receiver = supplier@operator.example
+  bound    items.0.amount.currency = EUR
+  derived  sender_batch_header.sender_batch_id <- request_id
+  agent    amount: 1.00 … 500.00
+  limits   per call 500.00 · daily 1500.00 · 10/h · approval over_amount:200.00
+  returns  ok, status, payout_batch_id, amount
+
+show_payout  ->  GET /v1/payments/payouts/{id}
+  limits   per call — · daily — · —/h · approval none
+  returns  ok, status, paypal_status
+
+policy is valid.

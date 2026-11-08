@@ -1,0 +1,20 @@
+{
+  "original_video_sha256": "3690d4d531aa39cbc98ca9e9c06be57a6cf83bde8134d8fa1bf6e206dea6a24f",
+  "original_builder_sha256": "907a383eb6675091ea08b787daecce96249f427679cacca58e92a23ef1af023f",
+  "source_git_commit": "a3231117097d05e79ae8e978678cebf256b3bea4",
+  "changes": "Scoped amount/replay/history/baseline wording; visible author/ORCID and MP4 attribution. Same captured executions, not new PayPal or model runs.",
+  "narration": "Kokoro-82M Apache-2.0 via kokoro-onnx MIT; synthetic af_sarah; local CPU-only,4 threads",
+  "narration_sources": [
+    "https://huggingface.co/hexgrad/Kokoro-82M",
+    "https://github.com/thewh1teagle/kokoro-onnx"
+  ],
+  "inputs": {
+    "01_policy.txt": "ed63790dfc7aa42b7d818852e2cdafeb81056c14e8c9935570cb79c2185e9f56",
+    "02_demo.txt": "27ed228a59598aba0b6477d3a8b1f23a102c5a823086d3cdfb71a48113ec5495",
+    "03_bench.txt": "9d44cad149f6c43fa0eb92d73f04fff0b71f1820c000dc57f4cd486859e63d90",
+    "04_tests.txt": "b6f79ef447b14ba02550bf1f3a5ce8c7b85435f0b2de6db520ed112639093ed9",
+    "06_trace.txt": "5f15c5d087113f7ed312481a8ec4fd4c2d06f4b856b9c0d5041a328ab79647fb",
+    "consola_01.jpg": "27179ffc93fb46f2c1345db619826f7b5d01a309fc31fb8438d9f39e26e6406e",
+    "consola_02_ledger.jpg": "114f6b8d9da3f8af42f8fa2a2ec26cad735ddf29c56707832b2071f2315dc078"
+  }
+}

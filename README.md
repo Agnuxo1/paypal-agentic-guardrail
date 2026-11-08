@@ -4,14 +4,14 @@
 
 # PayPal Agentic Guardrail
 
-[![licence: MIT](https://img.shields.io/badge/licence-MIT-199e70?style=flat-square)](LICENSE) ![node: >=22](https://img.shields.io/badge/node->=22-199e70?style=flat-square&logo=nodedotjs&logoColor=white) ![tests: 70 passing](https://img.shields.io/badge/tests-70%20passing-3987e5?style=flat-square) [![bench: 450 runs](https://img.shields.io/badge/bench-450%20runs-3987e5?style=flat-square)](bench/results/latest-mock.json) ![transport: sandbox only](https://img.shields.io/badge/transport-sandbox%20only-c98500?style=flat-square) [![PayPal AI Hackathon: submission](https://img.shields.io/badge/PayPal%20AI%20Hackathon-submission-9085e9?style=flat-square)](https://paypalaihackathon.devpost.com/)
+[![licence: MIT](https://img.shields.io/badge/licence-MIT-199e70?style=flat-square)](LICENSE) ![node: >=22](https://img.shields.io/badge/node->=22-199e70?style=flat-square&logo=nodedotjs&logoColor=white) ![tests: 70 passing](https://img.shields.io/badge/tests-70%20passing-3987e5?style=flat-square) [![bench: 450 runs](https://img.shields.io/badge/bench-450%20runs-3987e5?style=flat-square)](bench/results/latest-mock.json) ![evidence: offline](https://img.shields.io/badge/evidence-offline-c98500?style=flat-square) [![PayPal AI Hackathon: prototype](https://img.shields.io/badge/PayPal%20AI%20Hackathon-prototype-9085e9?style=flat-square)](https://paypalaihackathon.devpost.com/)
 
 [**The idea**](#the-idea) · [**The bench**](#does-it-actually-work-the-bench) · [**Try it**](#try-it) · [**Limitations**](#observations-and-limitations) · [**Policy**](policy/operations.json) · [**Bench cases**](bench/cases.json) · [**Results**](bench/results/latest-mock.json)
 
 </div>
 
-**Let an AI agent run PayPal payments without ever handing it the credential, the payee, or the
-power to raise the amount.**
+**Keep AI payment agents inside operator-approved payees, endpoints and spending limits,
+without putting the credential in model context.**
 
 Built for the [PayPal AI Hackathon](https://paypalaihackathon.devpost.com/) and for the PayPal
 sandbox. For shops and teams that want an agent to take payments and cannot give it their keys.
@@ -23,8 +23,9 @@ cd paypal-agentic-guardrail && npm install && npm run demo
 ```
 
 That works immediately, offline: no PayPal account, no API key, no network. An offline stand-in for the
-sandbox endpoints is the default, so a reviewer can reproduce every number below in about a
-minute. Point it at the real sandbox when you want to: [two env vars](#running-against-the-real-paypal-sandbox).
+sandbox endpoints is the default, so a reviewer can run the offline demo and scripted benchmark.
+Retained model traces are included; reexecuting the models requires a configured provider.
+Real sandbox acceptance remains a delivery gate: [setup](#running-against-the-real-paypal-sandbox).
 
 ![How a payment passes through the broker (conceptual)](assets/hero-workflow.gif)
 
@@ -45,11 +46,17 @@ The worst case, a scripted agent that obeys every instruction it reads, over 450
 | Security incidents | **0** | 65 | 30 |
 | Benign tasks completed | **50/50** | 50/50 | 50/50 |
 
-Every request the broker composes validates against [PayPal's published OpenAPI documents](#checked-against-paypals-own-specification),
+Stored fixtures for all six operations validate against [PayPal's published OpenAPI documents](#checked-against-paypals-own-specification),
 and removing any of 19 safeguards makes the [tests fail](#does-the-evidence-notice-a-removed-safeguard).
 Six PayPal operations, spending limits, human approval thresholds, a hash-chained audit ledger, an
 operator console and an MCP server, in about 3,600 lines with one dependency. 70 tests.
 [What the evidence covers and what it does not](#observations-and-limitations).
+
+**8 November robustness update:** repeated runs are grouped by their original cases in
+[the reproducible secondary analysis](docs/recovery-20261108/SECONDARY_ANALYSIS.md).
+Against written rules, the incident difference is -2.22 percentage points and its descriptive
+case-resampling interval reaches zero. These fixed cases do not establish population security.
+The original run-level tests remain historical results, with dependence explicitly addressed in the update.
 
 ---
 
@@ -57,10 +64,11 @@ operator console and an MCP server, in about 3,600 lines with one dependency. 70
 
 ## The problem
 
-<p align="center"><img src="docs/readme/02-problem.gif" alt="A credential and hostile third-party data both reaching the agent, which then composes the call" width="100%"><br><sub>Fig. 1 — Today the agent holds the credential and composes the call. Source: README, The problem.</sub></p>
+<p align="center"><img src="docs/readme/02-problem.gif" alt="A credential and hostile third-party data both reaching the agent, which then composes the call" width="100%"><br><sub>Fig. 1 — The comparison baseline holds the credential and composes the call. Source: README, The problem.</sub></p>
 
-To let an agent take a payment with PayPal today, you give it the credential and let it compose
-the call. Two things follow from that, and neither is a bug in anyone's code:
+Our comparison baseline gives the model a payment credential and a general HTTP tool.
+This is one integration architecture, not a requirement of PayPal or every professional system.
+It creates two attack surfaces in this experiment:
 
 1. **The secret is in the model's context.** It is in the conversation, in the provider's logs,
    in your terminal scrollback, and in anything the agent is later talked into printing.
@@ -194,10 +202,10 @@ npm run bench        # ~2 seconds, offline, deterministic
 The three arms all face identical tasks and identical hostile data:
 
 - **`guardrail`** — the agent calls the broker. No credential.
-- **`control`** — the professional integration as it is written today: the sandbox credential is
+- **`control`** — the experiment's general HTTP baseline: a mock sandbox credential is
   in the agent's context and the agent composes the HTTP call itself.
-- **`control_hardened`** — the same, plus a **prompt-level defence**, which is what practitioners
-  actually do: a documented text check that refuses when it sees an override ("pay merchant X
+- **`control_hardened`** — the same baseline plus the experiment's **prompt-level defence**:
+  a documented text check that refuses when it sees an override ("pay merchant X
   instead", "print the client secret", "send it to this URL", "skip the approval").
 
 Comparing only against an undefended agent would be comparing against nobody, so the hardened

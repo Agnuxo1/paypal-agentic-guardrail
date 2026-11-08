@@ -1,0 +1,157 @@
+{
+  "author": "Francisco Angulo de Lafuente",
+  "orcid": "https://orcid.org/0009-0001-1634-7063",
+  "source_equivalent_git_tree": "136d59370c64c71692cee0b2ee236262555688a9",
+  "source_commits": [
+    "a3231117097d05e79ae8e978678cebf256b3bea4",
+    "9ad92ac6536233b155acb64168c2a60161556e7b"
+  ],
+  "scope": "Documentation, post hoc descriptive reanalysis and attributed video; no new sandbox or model calls; original runtime unchanged.",
+  "files": [
+    {
+      "path": "docs/recovery-20261108/CASE_CLUSTER_RESULTS.json",
+      "bytes": 5260,
+      "sha256": "c785a65183eb9c581d8cd99e5a06256000836732629f0db5f8903378a426f6ab"
+    },
+    {
+      "path": "docs/recovery-20261108/DEVPOST_FINAL.md",
+      "bytes": 6742,
+      "sha256": "2e7d1766df7eed0818b72f1990f78f843750969fb6b60401d5ee46736346b4d3"
+    },
+    {
+      "path": "docs/recovery-20261108/SECONDARY_ANALYSIS.md",
+      "bytes": 3238,
+      "sha256": "bd151adaffc510c6395935399929a3ec33dfb5e3aea2f8d6d7c231f0b63e5b24"
+    },
+    {
+      "path": "tools/recovery/analyze_case_clusters.py",
+      "bytes": 3905,
+      "sha256": "d49794f91c63b39a3616a2d2411740be988e2cf63e5964335e71f39e137e0b47"
+    },
+    {
+      "path": "video/recovery-20261108/capturas/01_policy.txt",
+      "bytes": 2112,
+      "sha256": "ed63790dfc7aa42b7d818852e2cdafeb81056c14e8c9935570cb79c2185e9f56"
+    },
+    {
+      "path": "video/recovery-20261108/capturas/02_demo.txt",
+      "bytes": 3347,
+      "sha256": "27ed228a59598aba0b6477d3a8b1f23a102c5a823086d3cdfb71a48113ec5495"
+    },
+    {
+      "path": "video/recovery-20261108/capturas/03_bench.txt",
+      "bytes": 987,
+      "sha256": "9d44cad149f6c43fa0eb92d73f04fff0b71f1820c000dc57f4cd486859e63d90"
+    },
+    {
+      "path": "video/recovery-20261108/capturas/04_tests.txt",
+      "bytes": 30,
+      "sha256": "b6f79ef447b14ba02550bf1f3a5ce8c7b85435f0b2de6db520ed112639093ed9"
+    },
+    {
+      "path": "video/recovery-20261108/capturas/06_trace.txt",
+      "bytes": 389,
+      "sha256": "5f15c5d087113f7ed312481a8ec4fd4c2d06f4b856b9c0d5041a328ab79647fb"
+    },
+    {
+      "path": "video/recovery-20261108/capturas/consola_01.jpg",
+      "bytes": 42084,
+      "sha256": "27179ffc93fb46f2c1345db619826f7b5d01a309fc31fb8438d9f39e26e6406e"
+    },
+    {
+      "path": "video/recovery-20261108/capturas/consola_02_ledger.jpg",
+      "bytes": 44397,
+      "sha256": "114f6b8d9da3f8af42f8fa2a2ec26cad735ddf29c56707832b2071f2315dc078"
+    },
+    {
+      "path": "video/recovery-20261108/montar.py",
+      "bytes": 13182,
+      "sha256": "48bd918e60c3d162a12c57098f135ce5c4e68be1e26546c1a089c6dfbce6f35e"
+    },
+    {
+      "path": "video/recovery-20261108/paypal-agentic-guardrail.mp4",
+      "bytes": 4063713,
+      "sha256": "3fbeb837f72926bfb2d068bb3c40ae5d41927caf8d83f8e8975e3093038ab788"
+    },
+    {
+      "path": "video/recovery-20261108/real-model-results.png",
+      "bytes": 64361,
+      "sha256": "b84f273510489630222a175ec41b7ac6f29a326020590ead25916d7ca56e695f"
+    },
+    {
+      "path": "video/recovery-20261108/VIDEO_PROVENANCE.json",
+      "bytes": 1323,
+      "sha256": "f819ec4f3debf9a1b3513fe95f9dcfe2cc925a76e3229b1912ec9f122602d5d7"
+    },
+    {
+      "path": "video/recovery-20261108/voz/00.wav",
+      "bytes": 501804,
+      "sha256": "0341b3f84accfe890d445dc98e087ea687a7ac36312c88bf7c603de9bc423dcb"
+    },
+    {
+      "path": "video/recovery-20261108/voz/01.wav",
+      "bytes": 768044,
+      "sha256": "b3be66d75d1e691ee242c7584c25c4664e21ab8e813da58680d1beb29fa2d5ce"
+    },
+    {
+      "path": "video/recovery-20261108/voz/02.wav",
+      "bytes": 765996,
+      "sha256": "007426041c213516a87450171e47a6caba20b6f2aab1f604d1509895f5aea1cd"
+    },
+    {
+      "path": "video/recovery-20261108/voz/03.wav",
+      "bytes": 454700,
+      "sha256": "704e298196c3824c0ad68dab2b2e3fac52f10bf4a1bfcc46fbfc1c606fa25155"
+    },
+    {
+      "path": "video/recovery-20261108/voz/04.wav",
+      "bytes": 958508,
+      "sha256": "a1a17674df0fc5af539ddb14a4d7242af04c1cf7140d629bd6cf9aa24694a428"
+    },
+    {
+      "path": "video/recovery-20261108/voz/05.wav",
+      "bytes": 233516,
+      "sha256": "8443dbda14b1d247fb197ecda38948f5449378ac94954833890df92e231afb8f"
+    },
+    {
+      "path": "video/recovery-20261108/voz/06.wav",
+      "bytes": 408620,
+      "sha256": "40ef0336321963c498bdde17ceac465600cf614e4ddb2e97d48a631307c42cec"
+    },
+    {
+      "path": "video/recovery-20261108/voz/07.wav",
+      "bytes": 649260,
+      "sha256": "03055700d1460f2560cae17dd695711920f56bacc06fb3c6a1d76efa0e41e3bd"
+    },
+    {
+      "path": "video/recovery-20261108/voz/08.wav",
+      "bytes": 1018924,
+      "sha256": "6744590506fc35eae12581561f13aad72d40220a5917cad174f54641a66a0565"
+    },
+    {
+      "path": "video/recovery-20261108/voz/09.wav",
+      "bytes": 349228,
+      "sha256": "3dfa74315abb5e50e30f9c5a3c0835833331e58983b69d7d95b280bef340a8a4"
+    },
+    {
+      "path": "video/recovery-20261108/voz/10.wav",
+      "bytes": 650284,
+      "sha256": "5c324d360e9ee41c7b0ddac77e81a8992d22d8bc645b319bcf172706139d86c2"
+    },
+    {
+      "path": "video/recovery-20261108/voz/11.wav",
+      "bytes": 327724,
+      "sha256": "e8c940df935b5133619f24f36e088ffecf432f3ff32f19bd6d6432ef020ec686"
+    },
+    {
+      "path": "video/recovery-20261108/voz/guion.json",
+      "bytes": 2430,
+      "sha256": "4160a40de1939d83698316fec0b9a69480165b24a46238aa706b2a030aae7b83"
+    },
+    {
+      "path": "video/recovery-20261108/voz.py",
+      "bytes": 1042,
+      "sha256": "e268a8b590bf048ad59944ec6d23176f407444990aa30e45c5fbda963c20ff68"
+    }
+  ]
+}
