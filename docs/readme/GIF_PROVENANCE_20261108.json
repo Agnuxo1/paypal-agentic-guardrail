@@ -1,0 +1,61 @@
+{
+  "author": "Francisco Angulo de Lafuente",
+  "orcid": "https://orcid.org/0009-0001-1634-7063",
+  "license": "MIT",
+  "generation": "Original deterministic Pillow drawings, CPU only; no external or generated image assets.",
+  "provider_attempt": {
+    "provider": "Higgsfield",
+    "model": "gpt_image_2_6",
+    "format": "gif",
+    "submitted_jobs": 0,
+    "error": "Requires basic plan or higher."
+  },
+  "runtime_source_commit": "6957d117881d11d308a9306dad5a14a2dd7ebf0d",
+  "script_sha256": "8d8c1c29090dcc793367e137f0bdd0fb5043c6de90559867e66b3f7e5fac5526",
+  "render_environment": {
+    "Pillow": "10.4.0",
+    "fonts": "Windows Segoe UI, Segoe UI Semibold, Consolas; font files not redistributed"
+  },
+  "figures": [
+    {
+      "file": "24-operator-flow-20261108.gif",
+      "sha256": "269e061ec6c34545bc66020baed9975ce7ca2eab96ed9da6f39abefb5042e29a",
+      "bytes": 134221,
+      "size": [
+        1280,
+        672
+      ],
+      "frames": 60,
+      "duration_ms": 6000,
+      "loop": 0,
+      "signature_each_frame_verified": true
+    },
+    {
+      "file": "25-shared-cases-20261108.gif",
+      "sha256": "bdd3ac771d80e77d84a34ec602746ba19151def652563a4995eabf7f7646653e",
+      "bytes": 189912,
+      "size": [
+        1280,
+        672
+      ],
+      "frames": 60,
+      "duration_ms": 6000,
+      "loop": 0,
+      "signature_each_frame_verified": true
+    },
+    {
+      "file": "26-sandbox-receipt-20261108.gif",
+      "sha256": "3bdeefde6bda5231fe4ab50b64884673b7d2aafff97a346792f7484021ade325",
+      "bytes": 103734,
+      "size": [
+        1280,
+        672
+      ],
+      "frames": 60,
+      "duration_ms": 6000,
+      "loop": 0,
+      "signature_each_frame_verified": true
+    }
+  ],
+  "all_text_inside_canvas": true
+}

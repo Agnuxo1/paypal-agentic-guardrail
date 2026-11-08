@@ -1,0 +1,46 @@
+{
+  "mode": "sandbox",
+  "host": "api-m.sandbox.paypal.com",
+  "actual_network": true,
+  "sandbox_verified": true,
+  "acceptance_check_passed": true,
+  "operations": [
+    "charge_customer_eur",
+    "show_order"
+  ],
+  "requested_amount": "1.00",
+  "currency": "EUR",
+  "capture_attempted": false,
+  "payout_attempted": false,
+  "model_called": false,
+  "credentials_persisted": false,
+  "result_statuses": [
+    "executed",
+    "executed"
+  ],
+  "exchanges": [
+    {
+      "method": "POST",
+      "route": "/v2/checkout/orders",
+      "http_status": 201,
+      "response_state": "CREATED",
+      "response_type": "unavailable",
+      "response_shape_valid": true
+    },
+    {
+      "method": "GET",
+      "route": "/v2/checkout/orders/:redacted_id",
+      "http_status": 200,
+      "response_state": "CREATED",
+      "response_type": "unavailable",
+      "response_shape_valid": true
+    }
+  ],
+  "scope": "Participant technical create/read check only; not all6 operations, financial safety, official entry or competition score.",
+  "started_at_utc": "2026-11-08T20:23:28.901Z",
+  "finished_at_utc": "2026-11-08T20:26:36.328Z",
+  "source_commit": "6957d117881d11d308a9306dad5a14a2dd7ebf0d",
+  "helper_sha256": "925a4477a58f72af3015c1d04bed552554db97b20cf3098432eba53aad063b7a",
+  "adapter_sha256": "e6b973c3c4a080bccefd3011438d1afff0f83b984d5997327b47fb0d2d8739cd",
+  "credential_handoff": "loopback form to ephemeral credential-source memory; no env or credential file"
+}

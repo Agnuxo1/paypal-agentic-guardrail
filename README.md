@@ -4,7 +4,7 @@
 
 # PayPal Agentic Guardrail
 
-[![licence: MIT](https://img.shields.io/badge/licence-MIT-199e70?style=flat-square)](LICENSE) ![node: >=22](https://img.shields.io/badge/node->=22-199e70?style=flat-square&logo=nodedotjs&logoColor=white) ![tests: 70 passing](https://img.shields.io/badge/tests-70%20passing-3987e5?style=flat-square) [![bench: 450 runs](https://img.shields.io/badge/bench-450%20runs-3987e5?style=flat-square)](bench/results/latest-mock.json) ![evidence: offline](https://img.shields.io/badge/evidence-offline-c98500?style=flat-square) [![PayPal AI Hackathon: prototype](https://img.shields.io/badge/PayPal%20AI%20Hackathon-prototype-9085e9?style=flat-square)](https://paypalaihackathon.devpost.com/)
+[![licence: MIT](https://img.shields.io/badge/licence-MIT-199e70?style=flat-square)](LICENSE) ![node: >=22](https://img.shields.io/badge/node->=22-199e70?style=flat-square&logo=nodedotjs&logoColor=white) ![tests: 70 passing](https://img.shields.io/badge/tests-70%20passing-3987e5?style=flat-square) [![bench: 450 runs](https://img.shields.io/badge/bench-450%20runs-3987e5?style=flat-square)](bench/results/latest-mock.json) ![evidence: offline and Sandbox](https://img.shields.io/badge/evidence-offline%20%2B%20Sandbox-c98500?style=flat-square) [![PayPal AI Hackathon: submitted](https://img.shields.io/badge/PayPal%20AI%20Hackathon-submitted-9085e9?style=flat-square)](https://devpost.com/software/paypal-agentic-guardrail)
 
 [**The idea**](#the-idea) · [**The bench**](#does-it-actually-work-the-bench) · [**Try it**](#try-it) · [**Limitations**](#observations-and-limitations) · [**Policy**](policy/operations.json) · [**Bench cases**](bench/cases.json) · [**Results**](bench/results/latest-mock.json)
 
@@ -25,9 +25,15 @@ cd paypal-agentic-guardrail && npm install && npm run demo
 That works immediately, offline: no PayPal account, no API key, no network. An offline stand-in for the
 sandbox endpoints is the default, so a reviewer can run the offline demo and scripted benchmark.
 Retained model traces are included; reexecuting the models requires a configured provider.
-Real sandbox acceptance remains a delivery gate: [setup](#running-against-the-real-paypal-sandbox).
+**Submitted on 8 November 2026:** [Devpost entry](https://devpost.com/software/paypal-agentic-guardrail) ·
+[public demo video](https://youtu.be/r7ycGLhOG3k) ·
+[verified Sandbox create/read receipt](docs/recovery-20261108/SANDBOX_ACCEPTANCE_20261108.md).
+The separate acceptance check created an unapproved EUR 1 Sandbox order (HTTP 201) and read it
+(HTTP 200), using the measured broker source. No approval or capture occurred.
 
-![How a payment passes through the broker (conceptual)](assets/hero-workflow.gif)
+![How operator policy bounds a request through the broker (schematic)](docs/readme/24-operator-flow-20261108.gif)
+
+<sub>Animated figure A1 — Operator policy, credential source and fixed endpoint. Original schematic; source: src/broker.js and policy/operations.json. The earlier [workflow animation](assets/hero-workflow.gif) remains available.</sub>
 
 Three real language models read the same 30 tasks, 20 of them attacks. Scored on what reached the
 wire, over 540 runs:
@@ -57,6 +63,10 @@ operator console and an MCP server, in about 3,600 lines with one dependency. 70
 Against written rules, the incident difference is -2.22 percentage points and its descriptive
 case-resampling interval reaches zero. These fixed cases do not establish population security.
 The original run-level tests remain historical results, with dependence explicitly addressed in the update.
+
+![The three arms reuse the same 30 cases; repetitions are grouped by case](docs/readme/25-shared-cases-20261108.gif)
+
+<sub>Animated figure A2 — Fixed offline design: 30 cases × 3 models × 2 repetitions × 3 arms = 540 runs. Repeated observations share cases; the existing result figures and secondary analysis report the measured counts.</sub>
 
 ---
 
@@ -543,9 +553,21 @@ Checked against PayPal's published OpenAPI documents, November 2026.
 
 ## Hackathon status
 
+![Verified Sandbox create201 and read200 exchange, illustrated from the sanitized receipt](docs/readme/26-sandbox-receipt-20261108.gif)
+
+<sub>Animated figure A3 — Schematic of the separate recorded create/read acceptance check. EUR 1 unapproved Sandbox order; no capture or charge. This is an illustration of the receipt, not a live screen recording.</sub>
+
 Built for the PayPal AI Hackathon, submission period 1 Oct – 12 Nov 2026. Entirely new work
 written during that period, depending on the author's previously published `enigmagent-mcp`
 package for the encrypted vault — the split between the two is spelled out above.
+
+Devpost confirmed **Project submitted!** on 8 November 2026, submission **1290222**:
+[official project page](https://devpost.com/software/paypal-agentic-guardrail).
+The [public video](https://youtu.be/r7ycGLhOG3k) is 155.83 seconds (YouTube displays 2:36).
+The measured runtime remains frozen at `6957d117881d11d308a9306dad5a14a2dd7ebf0d`;
+subsequent delivery documentation adds the separate
+[real Sandbox acceptance check](docs/recovery-20261108/SANDBOX_ACCEPTANCE_20261108.md).
+Submission receipt does not establish judging acceptance, score, rank or an award.
 
 An independent pre-submission review was run and every finding was fixed before publication,
 including the numbers that changed as a result; it is written up in full under
@@ -584,8 +606,10 @@ a scripted agent; the real-model bench uses three hosted models. Being explicit:
 - **The transport is a mock of the PayPal endpoints,** faithful to the response shapes this
   project reads, including PayPal's request-id idempotency behaviour. `npm run bench:sandbox`
   runs the same bench against the real sandbox. Mock and sandbox results are reported separately
-  and never averaged together. *The sandbox run is pending credentials; when it exists it will
-  appear here as its own table, not merged into the one above.* The stand-in was tightened in
+  and never averaged together. *The complete sandbox bench has not been run. The separate
+  [8 November acceptance check](docs/recovery-20261108/SANDBOX_ACCEPTANCE_20261108.md)
+  verifies only real create/read requests, not all six operations or the benchmark arms.*
+  The stand-in was tightened in
   November to reject what PayPal rejects: an order with items and no breakdown, and a refund above
   its capture. That took the control arm from 10/100 to 20/100 and the hardened arm from 60/100 to
   70/100, because those attacks now fail upstream. The numbers moved against us and are the ones
@@ -693,8 +717,8 @@ below is a deployment, and each would need its own policy, its own limits and a 
 - **Adaptive attacks.** The real-model bench uses fixed attacks. Attacks written against this design, on
   more models and providers, are the next test; AgentDojo and InjecAgent show how such arms are scored
   [[5](#ref-5), [4](#ref-4)].
-- **The sandbox table.** `npm run bench:sandbox` exists, and the run is pending credentials. It should appear as
-  its own table beside the mock one.
+- **The sandbox table.** `npm run bench:sandbox` exists; the complete benchmark remains outstanding.
+  The verified create/read acceptance check is reported separately and does not supply that table.
 - **A chain that resists a rewrite.** The ledger is unkeyed by design and the README says so: it detects an
   edit, it does not stop someone who can write the file from recomputing it. Signing the chain, or anchoring its
   head outside the operator machine, would close that gap [[10](#ref-10)].
@@ -714,8 +738,9 @@ Documented in this repository:
    [Observations and limitations](#observations-and-limitations).
 4. The detector blindness fixed and pinned by `tests/detectors.test.js`.
 5. Conformance with PayPal's OpenAPI documents and a mutation check of 19 safeguards.
+6. A separate real Sandbox create/read acceptance check and the official Devpost submission on 8 November 2026.
 
-Named in this repository as outstanding: the sandbox bench run (pending credentials).
+Named in this repository as outstanding: the complete sandbox bench run.
 
 **Proposed next steps (not commitments).** These are suggestions from this README build, not the author's
 published plan: adaptive attacks written against this design; a signed or externally anchored ledger chain; a mechanically checked statement of the data-path property; and more operations and
@@ -735,6 +760,8 @@ These are historical publication and grant records under the inventor name Franc
 <!-- author-background:end -->
 
 ## Licence
+
+The three delivery animations A1–A3 are original CPU-rendered diagrams. Their [reproducible source](docs/recovery-20261108/render_delivery_gifs.py) and [frame/hash provenance](docs/readme/GIF_PROVENANCE_20261108.json) accompany them. Every frame carries the author's name and ORCID.
 
 MIT — see [LICENSE](LICENSE). Third-party: [`enigmagent-mcp`](https://www.npmjs.com/package/enigmagent-mcp)
 (MIT, same author). No other runtime dependencies.
