@@ -10,8 +10,8 @@
   "files": [
     {
       "path": "docs/recovery-20261108/CASE_CLUSTER_RESULTS.json",
-      "bytes": 5260,
-      "sha256": "c785a65183eb9c581d8cd99e5a06256000836732629f0db5f8903378a426f6ab"
+      "bytes": 5068,
+      "sha256": "6ddb6db355bacef3f16ff4e3dfda51b07a3ab4dfb9d5b22e3a603b358697dad7"
     },
     {
       "path": "docs/recovery-20261108/DEVPOST_FINAL.md",
@@ -20,13 +20,13 @@
     },
     {
       "path": "docs/recovery-20261108/SECONDARY_ANALYSIS.md",
-      "bytes": 3238,
-      "sha256": "bd151adaffc510c6395935399929a3ec33dfb5e3aea2f8d6d7c231f0b63e5b24"
+      "bytes": 3215,
+      "sha256": "5ca841b7cbfffa0abbc32bc6b237c75c63eff262b15f02fc6b50201eab17f8c7"
     },
     {
       "path": "tools/recovery/analyze_case_clusters.py",
-      "bytes": 3905,
-      "sha256": "d49794f91c63b39a3616a2d2411740be988e2cf63e5964335e71f39e137e0b47"
+      "bytes": 3843,
+      "sha256": "009905571505172e514dfc79be38373cdcc6466e4caeb659df89c6c4056ab4fc"
     },
     {
       "path": "video/recovery-20261108/capturas/01_policy.txt",
@@ -50,8 +50,8 @@
     },
     {
       "path": "video/recovery-20261108/capturas/06_trace.txt",
-      "bytes": 389,
-      "sha256": "5f15c5d087113f7ed312481a8ec4fd4c2d06f4b856b9c0d5041a328ab79647fb"
+      "bytes": 380,
+      "sha256": "467aeda89d83b9502dd20091b51844bd76b92b217eb7550ad5a87ee2365a1b8d"
     },
     {
       "path": "video/recovery-20261108/capturas/consola_01.jpg",
@@ -65,8 +65,8 @@
     },
     {
       "path": "video/recovery-20261108/montar.py",
-      "bytes": 13182,
-      "sha256": "48bd918e60c3d162a12c57098f135ce5c4e68be1e26546c1a089c6dfbce6f35e"
+      "bytes": 12896,
+      "sha256": "e418992e84a11771898b571501da2f12f1dc012d2f5ed04ccd72d7bce2a5cbe5"
     },
     {
       "path": "video/recovery-20261108/paypal-agentic-guardrail.mp4",
@@ -80,8 +80,8 @@
     },
     {
       "path": "video/recovery-20261108/VIDEO_PROVENANCE.json",
-      "bytes": 1323,
-      "sha256": "f819ec4f3debf9a1b3513fe95f9dcfe2cc925a76e3229b1912ec9f122602d5d7"
+      "bytes": 2277,
+      "sha256": "daed86bdfb71221d9e23d4255b0be43294f55870d4d1a1500a0f757f4df549c6"
     },
     {
       "path": "video/recovery-20261108/voz/00.wav",
@@ -150,8 +150,10 @@
     },
     {
       "path": "video/recovery-20261108/voz.py",
-      "bytes": 1042,
-      "sha256": "e268a8b590bf048ad59944ec6d23176f407444990aa30e45c5fbda963c20ff68"
+      "bytes": 1023,
+      "sha256": "905146b66acf763ee6a4c819b9a6c4c29c8e5c18a49374b0f492ea30436a6288"
     }
-  ]
+  ],
+  "hash_scope": "Exact staged Git blob bytes, with repository text normalization. Excludes this self-referential manifest. Captured pre-normalization render inputs are separately identified in VIDEO_PROVENANCE.json.",
+  "corrects_parent_manifest_of_commit": "99b8af10ab1c1dad79c097cb228a7771126b61a0"
 }
