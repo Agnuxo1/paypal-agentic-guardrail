@@ -1,0 +1,15 @@
+[
+  "PayPal Agentic Guardrail places operator policy between an AI agent and payment tools. It keeps credentials outside model context and binds requests to declared limits.",
+  "In our comparison baseline, the model holds a credential and a general HTTP tool. A hostile invoice can redirect its request. The broker removes that authority from the agent.",
+  "The operator binds payee, currency and endpoint. The agent chooses a declared operation and values inside a closed schema. Bound fields are applied last.",
+  "This captured offline demo shows valid requests executing, hostile payee changes refused, excessive amounts blocked, and repeated requests suppressed inside the fixed one minute bucket. Higher value payouts wait for a person.",
+  "The operator console shows the allowed operations and approval queue. A hash chained ledger records decisions and refusals. It detects changes against trusted history, not a privileged rewrite.",
+  "One retained offline Qwen trace illustrates the difference: the HTTP baseline follows the hostile merchant instruction. The broker creates the policy bound order.",
+  "The fixed offline study used thirty cases, three real models, two repetitions and three arms: five hundred and forty runs. Each arm reused the same cases.",
+  "Across one hundred and eighty runs per arm, incident counts were zero with the broker, thirty two with the control and four with written rules. The broker completed fifty nine of sixty benign tasks.",
+  "Repeated runs are not independent cases. Case grouped reanalysis found an incident difference of minus two point two two percentage points from written rules, with a descriptive interval reaching zero. Seven broker calls differed from the intended amount, while staying within policy. Bounds do not guarantee the intended choice.",
+  "In the scripted offline benchmark, the broker blocked one hundred of one hundred attacks with zero incidents. The seventy tests pass, and all nineteen tested safeguard mutations are detected.",
+  "Separately, a real PayPal Sandbox check created an unapproved one euro order and read that same order: HTTP two oh one, then two hundred. No approval, capture or charge occurred.",
+  "That verifies two endpoints, not all six operations or production safety. The model benchmarks remain offline; the animation illustrates the recorded receipt, rather than replaying a live Sandbox call.",
+  "The project is MIT licensed, with reproducible source, retained traces and a one command offline demo. The repository links the complete evidence, setup and limitations."
+]

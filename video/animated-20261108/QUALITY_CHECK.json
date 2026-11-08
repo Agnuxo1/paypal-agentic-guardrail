@@ -1,0 +1,36 @@
+{
+  "sha256": "f3fe0f5c271ab44fc4fca97d4171c2f349aa9257fb3c02b38aa15d4cea9a02fb",
+  "actual_metadata": {
+    "ffmpeg_version": "7.1-essentials_build-www.gyan.dev built with gcc 14.2.0 (Rev1, Built by MSYS2 project)",
+    "codec": "h264",
+    "pix_fmt": "yuv420p(progressive)",
+    "audio_codec": "aac",
+    "fps": 30.0,
+    "source_size": [
+      1920,
+      1080
+    ],
+    "size": [
+      1920,
+      1080
+    ],
+    "rotate": 0,
+    "duration": 168.7
+  },
+  "full_decode_passed": true,
+  "actual_duration_seconds": 168.7,
+  "narration_unclipped": true,
+  "pcm_peak": 32511,
+  "near_clip_samples": 0,
+  "narration_not_truncated": true,
+  "chapter_frames_decoded": 13,
+  "subtitle_cues": 42,
+  "signature_plate_identical_all13scenes": true,
+  "readme_gifs": 6,
+  "contact_sheets": [
+    "qa/contact-1.png",
+    "qa/contact-2.png",
+    "qa/contact-3.png"
+  ],
+  "visual_review": "Root and independent Goldfish inspected contact sheets and further decoded frames; no observed caption overlaps in final master"
+}

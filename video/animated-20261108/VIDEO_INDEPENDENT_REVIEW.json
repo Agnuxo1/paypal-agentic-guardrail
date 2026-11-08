@@ -1,0 +1,15 @@
+{
+  "reviewer": "paypal_animated_video_goldfish",
+  "findings": [],
+  "sha256": "f3fe0f5c271ab44fc4fca97d4171c2f349aa9257fb3c02b38aa15d4cea9a02fb",
+  "checks": [
+    "MP4 full decode168.7seconds1920x1080/30fps/5061frames; SHA exact",
+    "Measured motion inside diagram regions, excluding subtitles and headers",
+    "Recomputed540unique records and exact incident/benign counts; independent case resampling agrees",
+    "Reviewed all listed contact sheets and further decoded frames; captions/author/ORCID readable without observed overlaps",
+    "Separate receipt supports Sandbox201/200/unapprovedEUR1/CREATED/no capture; illustration scope explicit",
+    "AAC48kHz stereo, integrated-16.11LUFS and truepeak-1.44dBTP; no silence longer1second below-45dB"
+  ],
+  "audio_listened": false,
+  "limits": "Audio signal verified; pronunciation and sync not certified by listening. No identified secret/account data in reviewed samples. External links outside reviewer scope."
+}

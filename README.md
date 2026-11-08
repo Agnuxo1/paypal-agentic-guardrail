@@ -26,7 +26,7 @@ That works immediately, offline: no PayPal account, no API key, no network. An o
 sandbox endpoints is the default, so a reviewer can run the offline demo and scripted benchmark.
 Retained model traces are included; reexecuting the models requires a configured provider.
 **Submitted on 8 November 2026:** [Devpost entry](https://devpost.com/software/paypal-agentic-guardrail) ·
-[public demo video](https://youtu.be/r7ycGLhOG3k) ·
+[public demo video](https://youtu.be/iP91sBZ5lxo) ·
 [verified Sandbox create/read receipt](docs/recovery-20261108/SANDBOX_ACCEPTANCE_20261108.md).
 The separate acceptance check created an unapproved EUR 1 Sandbox order (HTTP 201) and read it
 (HTTP 200), using the measured broker source. No approval or capture occurred.
@@ -563,7 +563,13 @@ package for the encrypted vault — the split between the two is spelled out abo
 
 Devpost confirmed **Project submitted!** on 8 November 2026, submission **1290222**:
 [official project page](https://devpost.com/software/paypal-agentic-guardrail).
-The [public video](https://youtu.be/r7ycGLhOG3k) is 155.83 seconds (YouTube displays 2:36).
+The revised [public video](https://youtu.be/iP91sBZ5lxo) is 168.7 seconds (YouTube displays 2:49),
+with six README animations, retained offline prototype footage and an illustration of the separately
+recorded Sandbox receipt. [Source, subtitles, thumbnail and verification](video/animated-20261108/README.md)
+accompany the film. The [earlier 2:36 presentation](https://youtu.be/r7ycGLhOG3k) remains available.
+
+[![Animated walkthrough: AI payments, policy first; generated illustrative thumbnail](video/animated-20261108/thumbnail-generated.png)](https://youtu.be/iP91sBZ5lxo)
+
 The measured runtime remains frozen at `6957d117881d11d308a9306dad5a14a2dd7ebf0d`;
 subsequent delivery documentation adds the separate
 [real Sandbox acceptance check](docs/recovery-20261108/SANDBOX_ACCEPTANCE_20261108.md).

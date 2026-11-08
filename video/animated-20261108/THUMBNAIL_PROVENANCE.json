@@ -1,0 +1,25 @@
+{
+  "file": "thumbnail-generated.png",
+  "sha256": "773a42a4209bff8c06f3b5ccfa5e0a821d743a0ca505bce8640a80cf5bfeaf0c",
+  "bytes": 1592378,
+  "size": [
+    1672,
+    941
+  ],
+  "generator": "OpenAI image_gen tool",
+  "model_not_exposed": true,
+  "original_generated_image_preserved": true,
+  "author": "Francisco Angulo de Lafuente",
+  "orcid": "https://orcid.org/0009-0001-1634-7063",
+  "prompt": "Create a finished professional YouTube thumbnail for a real open-source research prototype. 16:9 landscape, ideally 1920x1080 or 1280x720, polished technical editorial design, exceptionally clear at small thumbnail size. Deep navy background (#0B1324), white typography, vivid teal (#40DABD) and electric blue accents. Left 55%: very large, impeccably spelled high-contrast headline on two lines, EXACT TEXT: 'AI PAYMENTS' and 'POLICY FIRST'. Above it a smaller clean product label, EXACT TEXT: 'PayPal Agentic Guardrail'. Right45%: an elegant original isometric schematic of a small abstract AI agent node sending a teal request through an operator-controlled policy gateway, then to a payment receipt/card symbol. The gateway is the focal visual, sophisticated dimensional lighting and restrained luminous connections, professional enterprise software aesthetic, no generic robot faces, brains, neon clutter or stock-photo people. Small restrained label under the schematic: 'Animated demo + Sandbox check'. Bottom footer band: exact author name 'Francisco Angulo de Lafuente', followed on the next line by 'ORCID 0009-0001-1634-7063', crisp and readable. Maintain safe margins with no clipped text; lower-right corner should remain relatively clear for YouTube duration overlay. It must be an attractive explanatory illustration, not a fabricated screenshot. No PayPal official logo, endorsement, award, trophy, financial return, metric, absolute security promise or claims like unhackable. All text must be correct. Original artwork; no watermark other than the requested visible author/ORCID footer. No additional text.",
+  "independent_review": {
+    "reviewer": "paypal_animated_video_goldfish",
+    "findings": [],
+    "checks": [
+      "PNG RGB, almost16:9, under2MB",
+      "Main text exact; author andORCID exact",
+      "Inspected full size and320x180/160x90 thumbnail reductions",
+      "No observed guarantee, endorsement, award, invented metric or real account data"
+    ]
+  }
+}

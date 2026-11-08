@@ -1,0 +1,28 @@
+{
+  "title": "PayPal Agentic Guardrail | Animated Demo and Sandbox Evidence",
+  "description": "Animated walkthrough of PayPal Agentic Guardrail: operator-bound AI payment tools, retained offline prototype recordings and README animations.\n\nThe fixed offline study has 540 runs across three arms. Incident counts are 0/32/4 per 180 runs; broker benign completion is 59/60. Repeated cases are dependent. The secondary case-resampling interval reaches zero; bounds do not guarantee intended amounts or production safety.\n\nA separate real PayPal Sandbox check on 8 November 2026 created and read an unapproved EUR 1 order: HTTP 201 then 200. No approval, capture or charge. The Sandbox animation illustrates that recorded receipt; this video does not replay a live API call or report new model experiments.\n\nSource, setup and MIT licence:\nhttps://github.com/Agnuxo1/paypal-agentic-guardrail\nRuntime measured at 6957d117881d11d308a9306dad5a14a2dd7ebf0d; README GIF source pinned at a11815e41ab833a3c9c45936b88905c554eb187d.\nSanitized Sandbox receipt:\nhttps://github.com/Agnuxo1/paypal-agentic-guardrail/blob/67809207998c1d96eefb5f2302bb746d0097d9e4/docs/recovery-20261108/SANDBOX_ACCEPTANCE_20261108.md\nReproducible analysis:\nhttps://github.com/Agnuxo1/paypal-agentic-guardrail/blob/6957d117881d11d308a9306dad5a14a2dd7ebf0d/docs/recovery-20261108/SECONDARY_ANALYSIS.md\nSource and media backup:\nhttps://huggingface.co/datasets/Agnuxo/paypal-agentic-guardrail-source-archive\n\nChapters\n00:00 Policy-bound AI tools\n00:12 Experimental baseline\n00:24 Operator policy\n00:35 Recorded offline prototype\n00:50 Console and ledger\n01:03 Recorded Qwen trace\n01:14 Shared-case study design\n01:25 Fixed-suite results\n01:37 Case-grouped reanalysis\n01:57 Tests and safeguard mutations\n02:10 Real Sandbox create/read receipt\n02:23 Scope of the Sandbox check\n02:36 Reproduce the open-source project\n\nAuthor: Francisco Angulo de Lafuente (@Agnuxo1)\nORCID: https://orcid.org/0009-0001-1634-7063\nGeneric synthetic narration: local Kokoro-82M (Apache-2.0) via kokoro-onnx (MIT), af_sarah. It does not impersonate a real person. English subtitles are included. Original drawings/code are MIT; third-party notices are preserved.\n\nEarlier offline-only presentation retained as archive: https://youtu.be/r7ycGLhOG3k\n",
+  "visibility": "public",
+  "made_for_kids": false,
+  "language": "English",
+  "ai_voice_disclosed": true,
+  "chapters": [
+    "00:00 Policy-bound AI tools",
+    "00:12 Experimental baseline",
+    "00:24 Operator policy",
+    "00:35 Recorded offline prototype",
+    "00:50 Console and ledger",
+    "01:03 Recorded Qwen trace",
+    "01:14 Shared-case study design",
+    "01:25 Fixed-suite results",
+    "01:37 Case-grouped reanalysis",
+    "01:57 Tests and safeguard mutations",
+    "02:10 Real Sandbox create/read receipt",
+    "02:23 Scope of the Sandbox check",
+    "02:36 Reproduce the open-source project"
+  ],
+  "source_video_expected_seconds": 168.7,
+  "video_file": "paypal-agentic-guardrail-animated-master.mp4",
+  "video_sha256": "f3fe0f5c271ab44fc4fca97d4171c2f349aa9257fb3c02b38aa15d4cea9a02fb",
+  "duration_seconds": 168.7,
+  "public_url": "https://youtu.be/iP91sBZ5lxo"
+}

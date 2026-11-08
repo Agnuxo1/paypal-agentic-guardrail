@@ -1,0 +1,3 @@
+# Professional generated thumbnail
+
+16:9 composition: left55% strong title; right45% compact schematic AI agent -> policy gateway -> payment receipt. Deep navy, bright teal and electric blue; restrained depth and generous negative space. Exact title AI PAYMENTS / POLICY FIRST. Small product name PayPal Agentic Guardrail. Footer Francisco Angulo de Lafuente and ORCID0009-0001-1634-7063. No scores, awards, blanket security guarantees, official-logo endorsement or real account data. Generate an original image, inspect text/aspect ratio, upload to the same new YouTube video. Source idea: operator policy mediates AI payment tools; illustration, not a captured live interface.

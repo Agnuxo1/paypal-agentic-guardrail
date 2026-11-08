@@ -1,0 +1,171 @@
+{
+  "base_commit": "a11815e41ab833a3c9c45936b88905c554eb187d",
+  "measured_runtime_commit": "6957d117881d11d308a9306dad5a14a2dd7ebf0d",
+  "public_video": "https://youtu.be/iP91sBZ5lxo",
+  "original_video_preserved": "https://youtu.be/r7ycGLhOG3k",
+  "runtime_changes": 0,
+  "author_block_exact": true,
+  "previous_figures_retained": true,
+  "payloads": [
+    {
+      "path": "README.md",
+      "bytes": 55183,
+      "sha256": "c4bbb32026b655101a89c0b6f71259877a0eeb3743c828f650e37aea9d11f8b6"
+    },
+    {
+      "path": "video/animated-20261108/00.wav",
+      "bytes": 544812,
+      "sha256": "f4df6bf17281d15b6957d66ad2c4e26cc4399b89c58b7cbee924ea74376c53c3"
+    },
+    {
+      "path": "video/animated-20261108/01.wav",
+      "bytes": 559148,
+      "sha256": "82bb124074f2d8755bc9c1ae1bc39c6b39a50175ffe2a557b5e6d9c6259b0545"
+    },
+    {
+      "path": "video/animated-20261108/02.wav",
+      "bytes": 479276,
+      "sha256": "ca11280732a090efaeceff61d04a329022ad99dae37959cd2b5d200b1e09121b"
+    },
+    {
+      "path": "video/animated-20261108/03.wav",
+      "bytes": 683052,
+      "sha256": "cea87d66ebf4110be68bfa3183848e97a717ee53c6c809eaf3c63afa2d5f6a7d"
+    },
+    {
+      "path": "video/animated-20261108/04.wav",
+      "bytes": 587820,
+      "sha256": "16f3ae1983ab094cb26f0ef6e6eeddf2d5ed77c592e859cdab40c2d8dd18633a"
+    },
+    {
+      "path": "video/animated-20261108/05.wav",
+      "bytes": 518188,
+      "sha256": "c6e2dee913c3b2aef60c5f8706461383347c9a6cfb62d674970940aa907ae937"
+    },
+    {
+      "path": "video/animated-20261108/06.wav",
+      "bytes": 489516,
+      "sha256": "fb7b9e402661f1cc58f7f86f2fbc41a5336f42bbc64227b498a94cf16c0a286a"
+    },
+    {
+      "path": "video/animated-20261108/07.wav",
+      "bytes": 560172,
+      "sha256": "dbc46b0513b7b7c0c9fe1e61ca2407edf1451d4d0b61f9d8525c390666a2405f"
+    },
+    {
+      "path": "video/animated-20261108/08.wav",
+      "bytes": 929836,
+      "sha256": "c559e0156b14056ebdddf24732c004136a7242f0f0fc99c3e0f351c5894e7ec4"
+    },
+    {
+      "path": "video/animated-20261108/09.wav",
+      "bytes": 546860,
+      "sha256": "e2324ae45610b8e17e4727844b7deefe8c76e89f1336f11c0cfdda27fc9bd3b9"
+    },
+    {
+      "path": "video/animated-20261108/10.wav",
+      "bytes": 587820,
+      "sha256": "c26f4fdbfcfde37646cc2df592b1144870296e952125a213a40c7e5f09e20267"
+    },
+    {
+      "path": "video/animated-20261108/11.wav",
+      "bytes": 621612,
+      "sha256": "7a7480e12a785042081083a9129cb755a7ef869cb5f76ff73b04178c20e72f26"
+    },
+    {
+      "path": "video/animated-20261108/12.wav",
+      "bytes": 543788,
+      "sha256": "3681eaf72a35e02a647d4c057f559b5252351af3908944f1459929afa91a2859"
+    },
+    {
+      "path": "video/animated-20261108/DEVPOST_STORY_UPDATED.md",
+      "bytes": 7410,
+      "sha256": "40673a7112229233b014fc40d8c6d63df7b60287b796380ed20a2ff6398a65de"
+    },
+    {
+      "path": "video/animated-20261108/DEVPOST_VIDEO_UPDATE_RECEIPT.json",
+      "bytes": 500,
+      "sha256": "96f5de4d4ddfc7e8c3325e3a68f214a442e6d1102503ddabae6db3ceb7fb6295"
+    },
+    {
+      "path": "video/animated-20261108/QUALITY_CHECK.json",
+      "bytes": 1011,
+      "sha256": "a1b1ded176beccb2ed85725cb1247bfdf4ec40491991e7343b4d4c7fb3ee634f"
+    },
+    {
+      "path": "video/animated-20261108/README.md",
+      "bytes": 3704,
+      "sha256": "c8533ef4ea9065e399725e32e2d94b530d1957f20f6bb8ae5f2820bac8a3c339"
+    },
+    {
+      "path": "video/animated-20261108/THUMBNAIL_BRIEF.md",
+      "bytes": 679,
+      "sha256": "fe1fe6e14e69ffa3247dee66fbd1cde128533db144f88596e0cc09be9fcf2e3e"
+    },
+    {
+      "path": "video/animated-20261108/THUMBNAIL_PROVENANCE.json",
+      "bytes": 2392,
+      "sha256": "96b7e0b4f432e912007726d537bca39e4af27889102eb77ea0b857381790a3d0"
+    },
+    {
+      "path": "video/animated-20261108/VIDEO_INDEPENDENT_REVIEW.json",
+      "bytes": 974,
+      "sha256": "2da4492a5481617a9dd52ccadab40d2d21a537b364634ec9cee8a61c7180b84c"
+    },
+    {
+      "path": "video/animated-20261108/VIDEO_PROVENANCE.json",
+      "bytes": 8372,
+      "sha256": "9420891682d98502f4fc0d2276120a126a05023843ff85e876a4fdd3eb4fec46"
+    },
+    {
+      "path": "video/animated-20261108/YOUTUBE_METADATA.json",
+      "bytes": 3209,
+      "sha256": "9e042b9ff4ebd20480c96855101b74fb50884b841ebe5460760dcb032141e6d5"
+    },
+    {
+      "path": "video/animated-20261108/YOUTUBE_PUBLIC_RECEIPT.json",
+      "bytes": 878,
+      "sha256": "ccc8fa37e09f86f2be98d886f52489356aaa6a22a03ebc449195af7ee496b100"
+    },
+    {
+      "path": "video/animated-20261108/check_video.py",
+      "bytes": 3103,
+      "sha256": "5bba513f31e5d54dc14272d212d890eaa9f18608e0575c7d4408df711649c174"
+    },
+    {
+      "path": "video/animated-20261108/compose.py",
+      "bytes": 13802,
+      "sha256": "0345ecbe4644c94f53d07cf4b06b23b33c41634f1274c6f6f954ea14948b4a71"
+    },
+    {
+      "path": "video/animated-20261108/guion.json",
+      "bytes": 2577,
+      "sha256": "79e61917901ac09d65e72afe424553aa253f472bc6eb47e14dee788ac5207321"
+    },
+    {
+      "path": "video/animated-20261108/master_audio.py",
+      "bytes": 1949,
+      "sha256": "9ca182bb096c8ad7b28628afc60c30aed9cf0c51ff630985977cc6b0dce7ddc3"
+    },
+    {
+      "path": "video/animated-20261108/narrate.py",
+      "bytes": 1070,
+      "sha256": "a72d545f28b0d5c497088c9de4f6dbf57244dd46e64811547bfe8947c73eeafd"
+    },
+    {
+      "path": "video/animated-20261108/paypal-agentic-guardrail-animated-master.mp4",
+      "bytes": 8330742,
+      "sha256": "f3fe0f5c271ab44fc4fca97d4171c2f349aa9257fb3c02b38aa15d4cea9a02fb"
+    },
+    {
+      "path": "video/animated-20261108/paypal-agentic-guardrail-animated.en.srt",
+      "bytes": 3927,
+      "sha256": "2d463cb648a59b7594c7a107ec7793cab89c2d6d73ac0bd492543988f5a7836d"
+    },
+    {
+      "path": "video/animated-20261108/thumbnail-generated.png",
+      "bytes": 1592378,
+      "sha256": "773a42a4209bff8c06f3b5ccfa5e0a821d743a0ca505bce8640a80cf5bfeaf0c"
+    }
+  ]
+}

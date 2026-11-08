@@ -1,0 +1,189 @@
+1
+00:00:00,200 --> 00:00:05,054
+PayPal Agentic Guardrail places operator policy between an AI
+agent and
+
+2
+00:00:05,054 --> 00:00:10,250
+payment tools. It keeps credentials outside model context and
+binds requests
+
+3
+00:00:10,250 --> 00:00:11,549
+to declared limits.
+
+4
+00:00:12,267 --> 00:00:16,441
+In our comparison baseline, the model holds a credential and a
+
+5
+00:00:16,441 --> 00:00:20,885
+general HTTP tool. A hostile invoice can redirect its request. The
+
+6
+00:00:20,885 --> 00:00:23,915
+broker removes that authority from the agent.
+
+7
+00:00:24,633 --> 00:00:29,129
+The operator binds payee, currency and endpoint. The agent chooses
+a
+
+8
+00:00:29,129 --> 00:00:33,758
+declared operation and values inside a closed schema. Bound fields
+are
+
+9
+00:00:33,758 --> 00:00:34,617
+applied last.
+
+10
+00:00:35,333 --> 00:00:40,438
+This captured offline demo shows valid requests executing, hostile
+payee changes
+
+11
+00:00:40,438 --> 00:00:45,862
+refused, excessive amounts blocked, and repeated requests
+suppressed inside the fixed
+
+12
+00:00:45,862 --> 00:00:49,563
+one minute bucket. Higher value payouts wait for a person.
+
+13
+00:00:50,267 --> 00:00:54,819
+The operator console shows the allowed operations and approval
+queue. A
+
+14
+00:00:54,819 --> 00:00:59,819
+hash chained ledger records decisions and refusals. It detects
+changes against
+
+15
+00:00:59,819 --> 00:01:02,512
+trusted history, not a privileged rewrite.
+
+16
+00:01:03,233 --> 00:01:08,428
+One retained offline Qwen trace illustrates the difference: the
+HTTP baseline
+
+17
+00:01:08,428 --> 00:01:13,623
+follows the hostile merchant instruction. The broker creates the
+policy bound
+
+18
+00:01:13,623 --> 00:01:14,028
+order.
+
+19
+00:01:14,733 --> 00:01:19,094
+The fixed offline study used thirty cases, three real models, two
+
+20
+00:01:19,094 --> 00:01:23,455
+repetitions and three arms: five hundred and forty runs. Each arm
+
+21
+00:01:23,455 --> 00:01:24,931
+reused the same cases.
+
+22
+00:01:25,633 --> 00:01:29,463
+Across one hundred and eighty runs per arm, incident counts were
+
+23
+00:01:29,463 --> 00:01:32,934
+zero with the broker, thirty two with the control and four
+
+24
+00:01:32,934 --> 00:01:36,944
+with written rules. The broker completed fifty nine of sixty
+benign
+
+25
+00:01:36,944 --> 00:01:37,303
+tasks.
+
+26
+00:01:38,033 --> 00:01:42,384
+Repeated runs are not independent cases. Case grouped reanalysis
+found an
+
+27
+00:01:42,384 --> 00:01:46,497
+incident difference of minus two point two two percentage points
+from
+
+28
+00:01:46,497 --> 00:01:51,027
+written rules, with a descriptive interval reaching zero. Seven
+broker calls
+
+29
+00:01:51,027 --> 00:01:55,378
+differed from the intended amount, while staying within policy.
+Bounds do
+
+30
+00:01:55,378 --> 00:01:57,404
+not guarantee the intended choice.
+
+31
+00:01:58,133 --> 00:02:02,232
+In the scripted offline benchmark, the broker blocked one hundred
+of
+
+32
+00:02:02,232 --> 00:02:06,331
+one hundred attacks with zero incidents. The seventy tests pass,
+and
+
+33
+00:02:06,331 --> 00:02:09,525
+all nineteen tested safeguard mutations are detected.
+
+34
+00:02:10,233 --> 00:02:15,104
+Separately, a real PayPal Sandbox check created an unapproved one
+euro
+
+35
+00:02:15,104 --> 00:02:18,791
+order and read that same order: HTTP two oh one, then
+
+36
+00:02:18,791 --> 00:02:22,479
+two hundred. No approval, capture or charge occurred.
+
+37
+00:02:23,200 --> 00:02:27,950
+That verifies two endpoints, not all six operations or production
+safety.
+
+38
+00:02:27,950 --> 00:02:33,416
+The model benchmarks remain offline; the animation illustrates the
+recorded receipt,
+
+39
+00:02:33,416 --> 00:02:36,149
+rather than replaying a live Sandbox call.
+
+40
+00:02:36,867 --> 00:02:41,886
+The project is MIT licensed, with reproducible source, retained
+traces and
+
+41
+00:02:41,886 --> 00:02:46,702
+a one command offline demo. The repository links the complete
+evidence,
+
+42
+00:02:46,702 --> 00:02:48,195
+setup and limitations.

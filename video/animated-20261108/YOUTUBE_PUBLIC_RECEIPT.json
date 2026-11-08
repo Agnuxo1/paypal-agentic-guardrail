@@ -1,0 +1,21 @@
+{
+  "url": "https://youtu.be/iP91sBZ5lxo",
+  "video_id": "iP91sBZ5lxo",
+  "official_notice": "Se ha publicado el vídeo",
+  "observed_at_utc": "2026-11-08T22:25:31.356749+00:00",
+  "visibility": "public",
+  "duration_display": "2:49",
+  "duration_source_seconds": 168.7,
+  "video_sha256": "f3fe0f5c271ab44fc4fca97d4171c2f349aa9257fb3c02b38aa15d4cea9a02fb",
+  "thumbnail_file": "thumbnail-generated.png",
+  "thumbnail_sha256": "773a42a4209bff8c06f3b5ccfa5e0a821d743a0ca505bce8640a80cf5bfeaf0c",
+  "thumbnail_upload_accepted": true,
+  "subtitle_track": "English42timedcues imported and saved",
+  "ai_use_disclosed": true,
+  "made_for_kids": false,
+  "paid_promotion": false,
+  "language": "English",
+  "initial_copyright_community_checks": "no problems found",
+  "previous_video_preserved": "https://youtu.be/r7ycGLhOG3k",
+  "proof": "evidencias/youtube-animated-published.png"
+}
