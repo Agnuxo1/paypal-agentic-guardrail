@@ -26,7 +26,7 @@ That works immediately, offline: no PayPal account, no API key, no network. An o
 sandbox endpoints is the default, so a reviewer can run the offline demo and scripted benchmark.
 Retained model traces are included; reexecuting the models requires a configured provider.
 **Submitted on 8 November 2026:** [Devpost entry](https://devpost.com/software/paypal-agentic-guardrail) ·
-[public demo video](https://youtu.be/iP91sBZ5lxo) ·
+[corrected on-device video (1:22)](https://youtu.be/dmqk8oWB58o) ·
 [verified Sandbox create/read receipt](docs/recovery-20261108/SANDBOX_ACCEPTANCE_20261108.md).
 The separate acceptance check created an unapproved EUR 1 Sandbox order (HTTP 201) and read it
 (HTTP 200), using the measured broker source. No approval or capture occurred.
@@ -567,12 +567,29 @@ package for the encrypted vault — the split between the two is spelled out abo
 
 Devpost confirmed **Project submitted!** on 8 November 2026, submission **1290222**:
 [official project page](https://devpost.com/software/paypal-agentic-guardrail).
-The revised [public video](https://youtu.be/iP91sBZ5lxo) is 168.7 seconds (YouTube displays 2:49),
-with six README animations, retained offline prototype footage and an illustration of the separately
-recorded Sandbox receipt. [Source, subtitles, thumbnail and verification](video/animated-20261108/README.md)
-accompany the film. The [earlier 2:36 presentation](https://youtu.be/r7ycGLhOG3k) remains available.
+**On-device video correction (11 November 2026).** The official
+[1:22 public Windows execution demonstration](https://youtu.be/dmqk8oWB58o)
+contains actual screen-capture footage from the Windows 10 target device
+running the original Node.js 22 broker. It includes real CLI payment-operation
+decisions, replay protection, credential-access rejection and an approval gate,
+followed by a 450-run fixed offline mock benchmark and all 70 passing tests.
 
-[![Animated walkthrough: AI payments, policy first; generated illustrative thumbnail](video/animated-20261108/thumbnail-generated.png)](https://youtu.be/iP91sBZ5lxo)
+**Evidence boundary:** The recorded run uses an offline mock transport.
+It does not move money or perform a live PayPal API call. The independently
+[documented authenticated Sandbox order create/read test](docs/recovery-20261108/SANDBOX_ACCEPTANCE_20261108.md)
+records HTTP 201/200 for an unapproved EUR 1 order, without checkout,
+capture or charge. The fixed scripted attack-block metric is not a production
+fraud-risk or security guarantee.
+
+[![Actual Windows execution captured during the PayPal Agentic Guardrail demo](docs/readme/27-live-device-demo-20261111.jpg)](https://youtu.be/dmqk8oWB58o)
+
+[On-device demonstration reproduction, provenance and verification](docs/LIVE_DEVICE_DEMO_20261111.md).
+
+Earlier presentations remain available for historical reference only:
+[2:49 illustrated walkthrough](https://youtu.be/iP91sBZ5lxo),
+including its [original source assets](video/animated-20261108/README.md),
+and the [earlier 2:36 presentation](https://youtu.be/r7ycGLhOG3k).
+These animations are not the current contest-submission video.
 
 The measured runtime remains frozen at `6957d117881d11d308a9306dad5a14a2dd7ebf0d`;
 subsequent delivery documentation adds the separate
