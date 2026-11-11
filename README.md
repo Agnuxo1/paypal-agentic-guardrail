@@ -72,6 +72,10 @@ The original run-level tests remain historical results, with dependence explicit
 
 **Contents** — [The problem](#the-problem) · [Background](#background) · [The idea](#the-idea) · [What you get](#what-you-get) · [Does it actually work? The bench](#does-it-actually-work-the-bench) · [The security property, stated precisely](#the-security-property-stated-precisely) · [The own technology this builds on](#the-own-technology-this-builds-on) · [Try it](#try-it) · [Running against the real PayPal sandbox](#running-against-the-real-paypal-sandbox) · [Connecting a real agent](#connecting-a-real-agent) · [Writing a policy](#writing-a-policy) · [Layout](#layout) · [PayPal endpoints used](#paypal-endpoints-used) · [Hackathon status](#hackathon-status) · [Observations and limitations](#observations-and-limitations) · [Real-world applications](#real-world-applications) · [Possible improvements](#possible-improvements) · [Future work](#future-work) · [Licence](#licence) · [Bibliography](#bibliography)
 
+<!-- impact-note:start -->
+<sub><strong>Efficiency and practical value.</strong> The deterministic broker centralises payment-policy checks, spending limits and audit records while keeping credentials outside model context. This can reduce duplicated integration work and makes permitted actions easier to inspect before execution. Stored offline fixtures allow repeatable checks without live transactions; the measured security results remain bounded to the documented cases. See the <a href="#the-idea">design</a> and <a href="#observations-and-limitations">evaluation scope</a>.</sub>
+<!-- impact-note:end -->
+
 ## The problem
 
 <p align="center"><img src="docs/readme/02-problem.gif" alt="A credential and hostile third-party data both reaching the agent, which then composes the call" width="100%"><br><sub>Fig. 1 — The comparison baseline holds the credential and composes the call. Source: README, The problem.</sub></p>
